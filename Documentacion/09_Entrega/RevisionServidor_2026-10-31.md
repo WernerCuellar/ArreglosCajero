@@ -43,3 +43,9 @@ Se separan aceptación/monitoreo TCP y ciclo del cliente del hilo WPF. El client
 Nuevos logs JSONL en Logs junto al ejecutable: motivo, fase, IP, último tipo, milisegundos sin recepción/heartbeat, código Socket/SQL y consultas lentas. No incluyen payload, PIN, tokens de login o contraseñas.
 Motivos: HEARTBEAT_VENCIDO_30S, REMOTO_CERRO, SOCKET_..., PARADA_SERVIDOR, registro rechazado. La bitácora guarda CONEXION_MOTIVO. Correlacionar UTC de Logs con hora local SQL.
 La prueba local mantiene tres clientes más de treinta segundos. No demuestra estabilidad de la LAN real. Para diagnóstico de clientes antiguos conviene distribuir después el transporte actualizado del cliente; el alcance de este paquete portable sigue siendo el servidor.
+
+## Estado local tras la actualización
+Se aplican 08 y 09 sin reinstalar la base. Identidad NETGEAR con BANC02 provisional.
+Reglas NETGEAR-Servidor-TCP-5000 y NETGEAR-Discovery-UDP-5005 habilitadas para Distribucion/Servidor/Servidor.exe, perfil Any y origen LocalSubnet. No se abrió SQL.
+Actualizados los portables de servidor y CajeroRed_Cajero; la IP fija permanece pendiente de definir router y reserva DHCP.
+No se identificó todavía la causa exacta de los cortes físicos; los nuevos logs distinguen el motivo y las pruebas locales verifican el comportamiento esperado.

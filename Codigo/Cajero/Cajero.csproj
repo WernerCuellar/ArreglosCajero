@@ -1,8 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
- <PropertyGroup><OutputType>WinExe</OutputType><UseWPF>true</UseWPF></PropertyGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk">
+ <PropertyGroup><OutputType>WinExe</OutputType><Version>2.1.0</Version><UseWPF>true</UseWPF></PropertyGroup>
  <ItemGroup>
   <ProjectReference Include="../Aplicacion/Aplicacion.csproj"/>
   <ProjectReference Include="../PresentacionCompartida/PresentacionCompartida.csproj"/>
  </ItemGroup>
  <ItemGroup><None Include="../../Configuracion/cajero.ejemplo.json" Link="cajero.json" CopyToOutputDirectory="PreserveNewest"/></ItemGroup>
+ <ItemGroup><PackageReference Include="PDFsharp-WPF" Version="6.2.4" /></ItemGroup>
 </Project>

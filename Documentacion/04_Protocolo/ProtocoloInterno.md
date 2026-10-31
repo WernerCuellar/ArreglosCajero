@@ -67,3 +67,7 @@ El estado de una solicitud puede revisarse también en Transacciones/Auditoría 
 ## Listener compartido NETGEAR
 Antes de REGISTRAR_CAJERO, los tipos IB_* se encaminan a BancoInterbancario y reciben una respuesta de una sola conexión con idMensaje. Los ATM conservan mensajes e idSolicitud originales.
 Descubrimiento UDP 5005 y contrato IB: Documentacion/08_IntegracionEntreGrupos/ProtocoloExterno.md.
+
+## Compatibilidad Cajero 2.1.0
+VALIDAR_TOKEN aprobado añade usuarioId. ESTADO_SOLICITUD conserva su validación por sesión/usuario/cajero y añade idOriginal/usuarioId a los datos confirmados. CONSULTA_SALDO y CAMBIO_PIN aprobado incluyen fecha de SQL para el comprobante.
+Son campos adicionales: los clientes anteriores pueden seguir interpretando la respuesta. El cliente 2.1 requiere el servidor actualizado para recuperar pendientes con identidad verificada.

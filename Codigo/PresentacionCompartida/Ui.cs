@@ -32,35 +32,57 @@ public static class Ui
  }
  public static void Error(Exception e)=>MessageBox.Show(e is TimeoutException?"Sin respuesta en 10 segundos. Si fue un movimiento, consulte el estado antes de repetirlo.":e.Message,"Revise los datos o la conexión",MessageBoxButton.OK,MessageBoxImage.Warning);
  public static Border Tarjeta(UIElement contenido)=>new(){Background=Brushes.White,CornerRadius=new CornerRadius(9),Padding=new Thickness(20),Margin=new Thickness(0,0,0,16),BorderBrush=new SolidColorBrush(Color.FromRgb(212,221,234)),BorderThickness=new Thickness(1),Child=contenido};
- public static TextBox EntradaTarjeta(string valor="")
+ public static TextBox EntradaNumerica(int maximo,string valor="")
  {
-  var campo=new TextBox(){MaxLength=16,Text=valor,AllowDrop=false,ToolTip="Exactamente 16 dígitos, sin letras ni espacios."};
+  var campo=new TextBox(){MaxLength=maximo,Text=valor,AllowDrop=false,ToolTip=$"Solo dígitos; máximo {maximo}."};
   InputMethod.SetIsInputMethodEnabled(campo,false);
-  bool Permitido(string texto)=>texto.All(char.IsAsciiDigit)&&campo.Text.Length-campo.SelectionLength+texto.Length<=campo.MaxLength;
+  bool Permitido(string texto)=>texto.All(char.IsAsciiDigit)&&campo.Text.Length-campo.SelectionLength+texto.Length<=maximo;
   campo.PreviewTextInput+=(_,e)=>e.Handled=!Permitido(e.Text);
   campo.PreviewKeyDown+=(_,e)=>{if(e.Key==Key.Space)e.Handled=true;};
-  DataObject.AddPastingHandler(campo,(_,e)=>
-  {
-   // Rechazar un pegado inválido completo evita truncar silenciosamente una tarjeta.
-   if(e.DataObject.GetData(DataFormats.UnicodeText,true) is not string texto||!Permitido(texto))e.CancelCommand();
+  DataObject.AddPastingHandler(campo,(_,e)=>{if(e.DataObject.GetData(DataFormats.UnicodeText,true) is not string texto||!Permitido(texto))e.CancelCommand();});
+  return campo;
+ }
+ public static PasswordBox EntradaSecretaNumerica(int maximo,string valor="")
+ {
+  var campo=new PasswordBox(){MaxLength=maximo,Password=valor,AllowDrop=false,ToolTip=$"Exactamente {maximo} dígitos."};
+  InputMethod.SetIsInputMethodEnabled(campo,false);
+  campo.PreviewTextInput+=(_,e)=>e.Handled=!e.Text.All(char.IsAsciiDigit)||e.Text.Length>maximo;
+  campo.PreviewKeyDown+=(_,e)=>{if(e.Key==Key.Space)e.Handled=true;};
+  // Rechazar el pegado completo si excede la capacidad evita truncarlo
+  // silenciosamente. Para sustituir un secreto pegado, vaciarlo primero.
+  DataObject.AddPastingHandler(campo,(_,e)=>{
+   if(e.DataObject.GetData(DataFormats.UnicodeText,true) is not string texto||!texto.All(char.IsAsciiDigit)||campo.Password.Length+texto.Length>maximo)e.CancelCommand();
   });
   return campo;
  }
+ public static TextBox EntradaTarjeta(string valor="")=>EntradaNumerica(16,valor);
  public static Dictionary<string,string>? Formulario(Window propietario,string titulo,params (string Clave,string Etiqueta,string Valor,bool Secreto)[] campos)
+  =>FormularioValidado(propietario,titulo,campos);
+ public static Dictionary<string,string>? FormularioValidado(Window propietario,string titulo,
+  (string Clave,string Etiqueta,string Valor,bool Secreto)[] campos,Action<Dictionary<string,string>>? validar=null,Action<Window>? preparar=null,string aceptarTexto="Guardar")
  {
-  var w=new Window(){Owner=propietario,Title=titulo,Width=470,MaxHeight=760,SizeToContent=SizeToContent.Height,ResizeMode=ResizeMode.NoResize,WindowStartupLocation=WindowStartupLocation.CenterOwner};
+  var w=new Window(){Owner=propietario,Title=titulo,Width=500,MaxHeight=760,SizeToContent=SizeToContent.Height,ResizeMode=ResizeMode.NoResize,WindowStartupLocation=WindowStartupLocation.CenterOwner};
   var panel=new StackPanel(){Margin=new Thickness(24)};panel.Children.Add(Titulo(titulo));
-  var entradas=new Dictionary<string,Control>();
+  var entradas=new Dictionary<string,Control>();Dictionary<string,string>? resultado=null;
   foreach(var c in campos)
   {
    panel.Children.Add(Texto(c.Etiqueta));
-   Control input=c.Secreto?new PasswordBox(){Password=c.Valor}:c.Clave=="tarjeta"?EntradaTarjeta(c.Valor):new TextBox(){Text=c.Valor};
+   Control input=c.Secreto?EntradaSecretaNumerica(4,c.Valor):c.Clave=="tarjeta"?EntradaTarjeta(c.Valor):new TextBox(){Text=c.Valor};
    panel.Children.Add(input);entradas[c.Clave]=input;
   }
-  var acciones=new WrapPanel();var aceptar=Boton("Guardar",()=>w.DialogResult=true);aceptar.IsDefault=true;
+  var error=Texto("");error.Foreground=Brushes.Firebrick;panel.Children.Add(error);
+  var acciones=new WrapPanel();var aceptar=Boton(aceptarTexto,()=>{
+   try
+   {
+    var valores=entradas.ToDictionary(x=>x.Key,x=>x.Value is PasswordBox p?p.Password:((TextBox)x.Value).Text.Trim());
+    validar?.Invoke(valores);resultado=valores;w.DialogResult=true;
+   }
+   catch(Exception e) when(e is ArgumentException or InvalidOperationException or FormatException or OverflowException){error.Text=e.Message;}
+  });aceptar.IsDefault=true;
   acciones.Children.Add(aceptar);acciones.Children.Add(Boton("Cancelar",()=>w.DialogResult=false));panel.Children.Add(acciones);
   w.Content=new ScrollViewer(){Content=panel,VerticalScrollBarVisibility=ScrollBarVisibility.Auto};
-  return w.ShowDialog()==true?entradas.ToDictionary(x=>x.Key,x=>x.Value is PasswordBox p?p.Password:((TextBox)x.Value).Text.Trim()):null;
+  preparar?.Invoke(w);
+  return w.ShowDialog()==true?resultado:null;
  }
  public static decimal Monto(string t)
  {

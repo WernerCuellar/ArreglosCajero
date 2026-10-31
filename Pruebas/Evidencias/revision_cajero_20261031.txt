@@ -1,0 +1,29 @@
+OK · no envía otro movimiento durante una operación en curso
+OK · respuesta perdida conserva referencia en disco
+OK · otro usuario no carga la referencia ajena
+OK · nuevo cliente recupera referencia del usuario y servidor correctos
+OK · pendiente local no contiene credenciales
+OK · consulta confirmada elimina pendiente local
+OK · PIN rechaza pegados con letras, espacios o más de cuatro dígitos
+OK · token admite seis dígitos sin truncar pegados
+OK · PIN bloquea letras al escribir
+OK · nuevo acceso limpia aviso antiguo de inactividad
+OK · confirmación PIN inválida conserva el formulario y sus valores
+OK · cambio PIN válido muestra comprobante
+OK · máximo retirable considera saldo menor que límite
+OK · máximo retirable considera límite menor que saldo
+OK · actividad en formulario evita cierre por inactividad
+OK · inactividad cierra sesión y formulario
+OK · deshabilitación cierra formulario y sesión
+OK · formulario invalidado no envía dinero
+OK · corte de red cierra formulario abierto sin enviar operación
+OK · cerrar sesión no espera respuesta de LOGOUT
+OK · respuesta tardía no restaura pantalla de la sesión anterior
+OK · JSON dañado mantiene accesible la configuración
+OK · puerto fuera de rango no detiene la aplicación
+OK · error de escritura de configuración se informa sin cerrar el cajero
+OK · comprobante PDF válido: RETIRO
+OK · comprobante PDF válido: DEPOSITO
+OK · comprobante PDF válido: CONSULTA_SALDO
+OK · comprobante PDF válido: CAMBIO_PIN
+RESULTADO: 28 comprobaciones del cajero correctas.

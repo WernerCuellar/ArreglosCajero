@@ -56,7 +56,7 @@ La implementación se vincula a los identificadores del PDF. Las pruebas automá
 | C-09 | Últimos cinco movimientos de la red | Historial; sp_UltimasTransacciones | Prueba de orden/límite y pantalla |
 | C-10 | Comprobante en pantalla | Comprobante | Revisión de retiro/depósito/PIN |
 | C-11 | Cerrar sesión a 60s | Cajero/MainWindow.xaml.cs / reloj.Tick | Verificación visual local y escenario manual |
-| C-12 | Recibo PDF/impresión, teclado táctil | No implementado: deseable | Teclado físico estándar |
+| C-12 | Recibo PDF/impresión, teclado táctil | PDF implementado con PDFsharp-WPF; impresión/teclado táctil pendientes | 4 PDF y 28 pruebas del cliente |
 
 ## Reglas
 
@@ -87,4 +87,4 @@ Pendiente del grupo: nombres/carnés/responsables reales, tres equipos físicos 
 Descubrimiento UDP/IB_PING: BancoInterbancario.cs y listener compartido ServidorTcp.cs.
 Verificación de cuenta y transferencias: sp_IB_Operacion, BancoInterbancario.cs, Bancos de la red y Transferencias.
 Deduplicación, cupos concurrentes y rollback: script 08 y pruebas aisladas. No forman parte del PDF original y se incluyen por solicitud del usuario.
-Ojo del login y totales filtrados: 5 comprobaciones de interfaz. Integración total: 82 comprobaciones SQL/TCP/UDP. Pendiente ensayo físico con otros grupos y decisión final de IP/código.
+Ojo del login y totales filtrados: 5 comprobaciones de interfaz. Integración: 83 comprobaciones SQL/TCP/UDP; cajero: 28; interfaz servidor: 5. Total: 116. Pendiente ensayo físico con otros grupos y decisión final de IP/código.

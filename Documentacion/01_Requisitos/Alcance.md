@@ -12,4 +12,4 @@ El número de cajeros se configura en base de datos, sin una constante de cinco.
 
 Actualización 31/10/2026: se implementa NETGEAR con discovery UDP y protocolo IB del MD recibido. Ver ProtocoloExterno.md para atomicidad local, reservas, deduplicación y límites de interoperabilidad. Los ensayos usan pares simulados y no acreditan una prueba física con otro grupo.
 
-Los requisitos deseables quedan separados: S-12 correo; D-17 supervisor, temas, sonido; C-12 recibo PDF/impresión y teclado táctil. La tabla Administrador admite el rol Supervisor y el servicio rechaza escrituras para él, pero el acceso completo de solo lectura no se acredita sin su prueba de aceptación.
+Los requisitos deseables quedan separados: S-12 correo; D-17 supervisor, temas, sonido; C-12 impresión y teclado táctil (PDF implementado al 31/10/2026). La tabla Administrador admite el rol Supervisor y el servicio rechaza escrituras para él, pero el acceso completo de solo lectura no se acredita sin su prueba de aceptación.

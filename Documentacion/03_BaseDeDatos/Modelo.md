@@ -51,3 +51,5 @@ TransferenciaBancaria referencia Usuario y BancoRed por origen/destino; su clave
 vw_TransferenciasUsuario ofrece el historial con cuentas enmascaradas. Los movimientos no alteran TransaccionDetalle ni InventarioCajero: son transferencias contables, no efectivo físico.
 sp_IB_Operacion verifica administrador para configuración/salidas y valida IP autorizada para entradas. Usa sp_getapplock transaccional, bloqueos de usuario y rollback; nunca espera a otro banco dentro de una transacción SQL.
 Los diagramas de operación/administración originales corresponden al núcleo ATM; la extensión bancaria se describe aquí y en el script 08 anexo.
+
+09_CompatibilidadCajero.sql actualiza únicamente sp_Operacion: identidad usuarioId al abrir sesión, correlación/usuario en ESTADO_SOLICITUD y fecha SQL en saldo/cambio PIN. No cambia saldos, límites ni inventarios. El instalador nuevo aplica 01–09; una base restaurada se actualiza solo con 08/09.

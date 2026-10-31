@@ -14,10 +14,13 @@ La verificación visual navega por servidor y cajero y guarda capturas en Docume
 
 Pendientes que requieren a los integrantes: tres equipos físicos, red/firewall reales, los doce escenarios grabados, reparto definitivo de responsabilidades y enlace al video. Las pruebas en una sola PC no se anuncian como cumplimiento de esa demostración.
 
-## Verificación NETGEAR del 31/10/2026
+## Verificación vigente NETGEAR del 31/10/2026
 Compilación Release: cero errores y cero advertencias, SDK 9.0.311, destino .NET 8.
-82 comprobaciones de integración SQL/TCP/UDP y 5 comprobaciones de interfaz aprobadas (87 en total). Evidencia: Pruebas/Evidencias/integracion_20261031.txt y revision_servidor_20261031.txt.
-Incluye tres clientes ociosos con heartbeat por más de treinta segundos; el ensayo no demuestra estabilidad de la red física.
-Interbancario: ping en listener compartido, alias de cuenta, origen no autorizado, idempotencia, cambio de contenido, cuenta inexistente, monto negativo, campos nulos, rollback de saldo/cupo por fallo SQL, cupo concurrente, consulta de confirmación, UDP, salida confirmada y respuesta perdida con reserva.
-El par simulado se ejecuta en loopback; falta probar con servidores de otros grupos. No se modificó saldo operativo para estas pruebas: la base temporal fue eliminada.
-La instalación local recibió solo la migración aditiva 08 y la identidad NETGEAR con BANC02 provisional; no se ejecutó la semilla sobre la base restaurada.
+116 comprobaciones aprobadas: 83 SQL/TCP/UDP, 5 de interfaz del servidor y 28 del cajero.
+Evidencia exacta en Pruebas/Evidencias/integracion_20261031.txt, revision_servidor_20261031.txt y revision_cajero_20261031.txt.
+Integración: tres clientes estables más de treinta segundos, autenticación, dinero, concurrencia, rollback, autorización por usuario de la consulta pendiente e identidad/fechas compatibles con el nuevo cliente.
+Interbancario: UDP, IB_PING, alias de cuenta, banco no autorizado, idempotencia, contenido distinto, cupo concurrente, validación, rollback saldo/cupo, consulta de confirmación, salida confirmada y respuesta perdida.
+Cajero: referencia persistida antes del envío, bloqueo, reinicio/identidad, entrada numérica, formulario conservado ante error, actividad, deshabilitación/corte, cierre inmediato, respuesta tardía, configuración dañada/fuera de rango/sin escritura y cuatro tipos de PDF.
+Los PDF se revisaron con pypdf y dos vistas rasterizadas: una página, datos legibles y tarjeta enmascarada.
+La integración financiera se ejecuta en una base temporal eliminada al terminar. Los ensayos del cliente usan un par TCP simulado. No se mueven fondos operativos para esas pruebas.
+Faltan la validación física con otros grupos, decisión final del código y reservas DHCP en el router de la demostración. Los ensayos de loopback no acreditan estabilidad de esa LAN.

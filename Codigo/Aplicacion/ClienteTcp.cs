@@ -5,15 +5,15 @@ using CajeroRed.Protocolo;
 
 namespace CajeroRed.Aplicacion;
 
-public sealed class ClienteTcp : IAsyncDisposable
+public sealed partial class ClienteTcp : IAsyncDisposable
 {
     public string Direccion {get;set;}="127.0.0.1";
     public int Puerto {get;set;}=5000;
     public string Cajero {get;set;}="ATM-01";
     public bool Conectado {get;private set;}
-    public string? Sesion {get;set;}
+    private string? sesion;
+    public string? Sesion {get=>sesion;set{sesion=value;if(value==null)UsuarioActual=null;}}
     public string? SolicitudIncierta {get;private set;}
-    public void ConfirmarConsultaPendiente()=>SolicitudIncierta=null;
     public event Action<string>? Estado;
     public event Action<Mensaje>? Comando;
     private readonly ConcurrentDictionary<string,TaskCompletionSource<Mensaje>> pendientes=new();
@@ -22,13 +22,18 @@ public sealed class ClienteTcp : IAsyncDisposable
     private TcpClient? socket;
     private StreamWriter? writer;
     private Task? ciclo;
-    public void Iniciar()=>ciclo??=Task.Run(Reconectar);
+    public void Iniciar()
+    {
+        if(string.IsNullOrWhiteSpace(Direccion)||Puerto is <1 or >65535||string.IsNullOrWhiteSpace(Cajero))
+        {Estado?.Invoke("Configuración de conexión inválida. Corríjala para conectar.");return;}
+        ciclo??=Task.Run(Reconectar);
+    }
     public void ReconectarAhora()=>socket?.Dispose();
     public async Task<Mensaje> Enviar(string tipo,object? datos=null,string? id=null)
     {
         var m=Mensaje.Solicitud(tipo,Cajero,datos,Sesion);
         if(id!=null)m=m with {IdSolicitud=id};
-        return await Solicitar(m,fin.Token);
+        return await EnviarConProteccion(m);
     }
     private async Task<Mensaje> Solicitar(Mensaje m,CancellationToken ct)
     {
@@ -40,11 +45,8 @@ public sealed class ClienteTcp : IAsyncDisposable
             await escritura.WaitAsync(ct);
             try {await actual.WriteLineAsync(m.Serializar().AsMemory(),ct);}finally{escritura.Release();}
             var r=await promesa.Task.WaitAsync(TimeSpan.FromSeconds(10),ct);
-            if(r.Codigo=="96"&&m.Tipo is "RETIRO" or "DEPOSITO")SolicitudIncierta=m.IdSolicitud;
             return r;
         }
-        catch(Exception e) when(e is TimeoutException or IOException)
-        { if(m.Tipo is "RETIRO" or "DEPOSITO")SolicitudIncierta=m.IdSolicitud;throw; }
         finally{pendientes.TryRemove(m.IdSolicitud,out _);}
     }
     private async Task Reconectar()
@@ -61,7 +63,7 @@ public sealed class ClienteTcp : IAsyncDisposable
                 writer=new StreamWriter(socket.GetStream(),new UTF8Encoding(false),4096,true){AutoFlush=true,NewLine="\n"};
                 lectura=Leer(socket,conectado.Token);
                 fase="REGISTRAR";
-                var registro=await Solicitar(Mensaje.Solicitud("REGISTRAR_CAJERO",Cajero,new {equipo=Environment.MachineName,version="2.0.0"}),conectado.Token);
+                var registro=await Solicitar(Mensaje.Solicitud("REGISTRAR_CAJERO",Cajero,new {equipo=Environment.MachineName,version="2.1.0"}),conectado.Token);
                 if(registro.Codigo!="00")throw new IOException(registro.MensajeTexto);
                 Conectado=true;Estado?.Invoke("Conectado · "+Cajero);
                 Comando?.Invoke(registro);

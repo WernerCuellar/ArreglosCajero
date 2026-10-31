@@ -1,6 +1,6 @@
-{
+﻿{
   "direccion": "127.0.0.1",
   "puerto": 5000,
   "codigoCajero": "ATM-01",
-  "nombreBanco": "Sistema bancario"
+  "nombreBanco": "NETGEAR"
 }

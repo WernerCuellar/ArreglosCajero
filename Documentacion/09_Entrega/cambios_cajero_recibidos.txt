@@ -1,0 +1,327 @@
+LISTA DE CORRECCIONES Y PENDIENTES DEL CAJERO
+Proyecto: CajeroRed - Fase II
+Fecha de revisión: 31/10/2026
+
+ALCANCE
+
+Esta revisión corresponde a la aplicación Cajero.
+No se han aplicado las correcciones descritas.
+
+Código fuente:
+revision\final\CajeroRed_Servidor\Codigo\Cajero
+
+Comunicación del cliente:
+revision\final\CajeroRed_Servidor\Codigo\Aplicacion\ClienteTcp.cs
+
+Aplicación portable que se debe actualizar después de compilar:
+revision\final\CajeroRed_Cajero\Distribucion\Cajero
+
+Los hallazgos se obtuvieron revisando el código. Los escenarios
+indicados como pendientes todavía necesitan una prueba específica.
+
+
+1. BLOQUEAR NUEVOS MOVIMIENTOS CUANDO EXISTE UNA OPERACIÓN PENDIENTE
+
+Prioridad: ALTA.
+
+Problema:
+Después de un timeout en un retiro o depósito, el cliente guarda
+la referencia de la operación como pendiente. Sin embargo, los
+botones que ya estaban en pantalla pueden continuar habilitados.
+
+Consecuencia:
+Si la conexión sigue abierta y el usuario vuelve a intentar el
+movimiento, puede generarse otra solicitud con una referencia
+distinta, aunque la anterior ya haya sido procesada.
+
+Corrección:
+- Bloquear retiros y depósitos al detectar un resultado incierto.
+- Comprobar el bloqueo también antes de enviar una operación.
+- Mantener disponibles las opciones necesarias para consultar
+  y aclarar el movimiento pendiente.
+- Recuperar la operación normal cuando se confirme su resultado.
+
+Prueba de aceptación:
+Provocar una pérdida de respuesta después de enviar un retiro.
+Intentar otro movimiento y comprobar que no se envía hasta
+resolver el anterior.
+
+
+2. CERRAR LA SESIÓN LOCAL AUNQUE EL SERVIDOR NO RESPONDA
+
+Prioridad: ALTA.
+
+Problema:
+El botón Cerrar sesión espera la respuesta del servidor antes
+de limpiar la sesión local. Si la comunicación falla, esa limpieza
+puede no ejecutarse en ese momento.
+
+Corrección:
+- Cerrar inmediatamente el acceso local del usuario.
+- Limpiar los datos de la sesión y regresar al inicio.
+- Comunicar el cierre al servidor sin mantener al usuario
+  dentro del cajero mientras espera.
+
+Prueba de aceptación:
+Simular que el servidor no responde y pulsar Cerrar sesión.
+El cajero debe salir del menú del usuario inmediatamente.
+
+
+3. LIMITAR LOS CAMPOS DE CAMBIO DE PIN
+
+Requisito relacionado: C-07.
+Prioridad: ALTA.
+
+Problema:
+Los campos PIN actual, PIN nuevo y confirmación permiten escribir
+más de cuatro caracteres y letras. La validación ocurre después
+de cerrar el formulario.
+
+Corrección:
+- Admitir únicamente cuatro dígitos numéricos como máximo.
+- Aplicar la restricción al escribir y al pegar.
+- Rechazar letras, espacios y pegados inválidos.
+- Exigir cuatro dígitos completos en los tres campos.
+- Comprobar que el nuevo PIN coincida con la confirmación.
+- Comprobar que el nuevo PIN sea distinto del actual.
+- Conservar las validaciones que ya realiza el servidor.
+
+Prueba de aceptación:
+Intentar escribir o pegar letras, espacios y cinco o más dígitos.
+Comprobar también un cambio válido y una confirmación diferente.
+
+
+4. MOSTRAR EL MÁXIMO RETIRABLE SEGÚN SALDO Y LÍMITE
+
+Requisito relacionado: C-08.
+Prioridad: ALTA.
+
+Problema:
+La consulta muestra el saldo y el disponible del límite diario,
+pero no presenta por separado el máximo retirable considerando
+también el saldo de la cuenta.
+
+Corrección:
+Calcular en el cajero, con la información recibida del servidor:
+
+Máximo según saldo y límite =
+menor entre saldo actual y límite diario restante.
+
+Mostrar claramente:
+- Saldo actual.
+- Límite diario.
+- Retirado hoy.
+- Disponible del límite diario.
+- Máximo retirable según saldo y límite.
+
+Ejemplo:
+Saldo: Q100.00.
+Disponible del límite: Q500.00.
+Máximo según saldo y límite: Q100.00.
+
+La autorización final también depende de los billetes disponibles
+y continúa siendo responsabilidad del servidor.
+
+Prueba de aceptación:
+Consultar una cuenta cuyo saldo sea menor que el límite restante
+y otra cuyo saldo sea mayor. Verificar ambos resultados.
+
+
+5. RECUPERAR LA REFERENCIA PENDIENTE DESPUÉS DE CERRAR EL CAJERO
+
+Prioridad: MEDIA.
+Tipo: mejora de recuperación ante fallos.
+
+Problema:
+La referencia de una operación incierta solo se guarda en memoria.
+Al cerrar completamente la aplicación se pierde su recuperación
+automática desde el cliente.
+
+Corrección:
+- Guardar localmente los datos mínimos para identificarla.
+- Asociarla al servidor, código de cajero y usuario correspondiente.
+- Recuperarla al abrir nuevamente la aplicación.
+- Exigir el acceso del usuario adecuado antes de consultar.
+- Eliminar el pendiente local cuando quede aclarado.
+
+No guardar PIN, token ni credenciales dentro de ese registro.
+
+Prueba de aceptación:
+Dejar una operación pendiente, cerrar y abrir el cajero.
+Comprobar que se puede recuperar su referencia y consultar
+el resultado con el usuario correspondiente.
+
+
+6. MEJORAR LA ENTRADA NUMÉRICA DEL ACCESO
+
+Requisito relacionado: C-04.
+Prioridad: MEDIA.
+
+Problema:
+La tarjeta, el PIN de acceso y el token tienen límites de longitud
+y se validan al continuar, pero permiten introducir letras antes
+de esa validación.
+
+Corrección:
+- Tarjeta: entrada de hasta 16 dígitos; exigir exactamente 16.
+- PIN: entrada de hasta 4 dígitos; exigir exactamente 4.
+- Token: entrada de hasta 6 dígitos; exigir exactamente 6.
+- Rechazar letras, espacios y pegados inválidos.
+- Evitar aceptar silenciosamente solo una parte de un pegado largo.
+- Mantener enmascarados el PIN y el token.
+
+Prueba de aceptación:
+Probar escritura y pegado, tanto válidos como inválidos.
+Comprobar que las credenciales correctas continúan funcionando.
+
+
+7. LIMPIAR LOS MENSAJES ANTIGUOS DE INACTIVIDAD
+
+Prioridad: MEDIA.
+
+Problema:
+El mensaje "Sesión cerrada por 60 segundos sin actividad"
+puede seguir apareciendo después de iniciar otra sesión.
+Esto ya se observó en las capturas de las pruebas.
+
+Corrección:
+Actualizar el mensaje inferior al ingresar nuevamente y al cambiar
+el estado del cajero. Cada aviso debe describir la situación actual.
+
+Prueba de aceptación:
+Dejar vencer una sesión y volver a ingresar.
+El menú nuevo no debe conservar el aviso de sesión cerrada.
+
+
+8. MANEJAR ERRORES DE CONFIGURACIÓN SIN DETENER EL CAJERO
+
+Requisito relacionado: C-01.
+Prioridad: MEDIA.
+
+Problema:
+Falta validar completamente la configuración al cargarla.
+Por ejemplo, un puerto inválido escrito directamente en el JSON
+puede detener el ciclo de reconexión.
+
+Además, guardar la configuración en una carpeta sin permisos
+puede generar una excepción sin manejar desde ese botón.
+
+Corrección:
+- Validar dirección, puerto y código al abrir la aplicación.
+- Comprobar que el puerto esté entre 1 y 65535.
+- Manejar archivos dañados y errores de lectura o escritura.
+- Mostrar un mensaje claro y permitir corregir la configuración.
+- Mantener la aplicación operativa para realizar esa corrección.
+
+Prueba de aceptación:
+Probar una configuración con puerto inválido, un JSON dañado
+y una ubicación sin permiso de escritura.
+
+
+9. CONSERVAR LOS DATOS DEL FORMULARIO CUANDO HAY UN ERROR
+
+Requisitos relacionados: C-05, C-06 y C-07.
+Prioridad: BAJA.
+Tipo: mejora de usabilidad.
+
+Problema:
+Los formularios se cierran antes de validar completamente los datos.
+Si el monto, el desglose o la confirmación del PIN son incorrectos,
+el usuario debe abrirlos e ingresar la información otra vez.
+
+Corrección:
+- Validar antes de cerrar el formulario.
+- Mostrar el error en la misma ventana.
+- Conservar los valores para que puedan corregirse.
+- Evitar solicitar que se vuelva a escribir información innecesaria.
+
+Prueba de aceptación:
+Ingresar un monto o desglose inválido y corregirlo sin tener
+que comenzar nuevamente la operación.
+
+
+10. GUARDAR COMPROBANTES EN PDF
+
+Requisito relacionado: C-12.
+Prioridad: DESEABLE.
+Tipo: funcionalidad pendiente.
+
+Situación actual:
+El comprobante se muestra en pantalla, pero no existe la opción
+de guardarlo como archivo PDF.
+
+Implementación propuesta:
+- Agregar el botón Guardar comprobante en PDF.
+- Permitir elegir ubicación y nombre del archivo.
+- Generarlo utilizando el resultado confirmado por el servidor.
+- Incluir operación, fecha del servidor, referencia, cajero
+  y tarjeta enmascarada.
+- Incluir monto y saldo cuando correspondan.
+- Para cambio de PIN, mostrar únicamente su confirmación.
+- Manejar errores de guardado sin alterar el resultado de la operación.
+
+Prueba de aceptación:
+Guardar y abrir comprobantes de retiro, depósito, consulta de saldo
+y cambio de PIN. Revisar datos, legibilidad y ausencia de recortes.
+
+Alcance acordado:
+Implementar solamente el PDF.
+El teclado numérico táctil seguirá pendiente como función deseable.
+
+
+ESCENARIOS QUE TODAVÍA HAY QUE COMPROBAR
+
+
+11. INACTIVIDAD CON FORMULARIOS ABIERTOS
+
+Requisito relacionado: C-11.
+Estado: PENDIENTE DE PRUEBA ESPECÍFICA.
+
+Observación:
+Los manejadores de actividad están en la ventana principal.
+Se debe comprobar el comportamiento cuando el usuario trabaja
+en las ventanas de monto, desglose o cambio de PIN.
+
+Pruebas:
+- Escribir en esos formularios durante más de 60 segundos.
+- Comprobar que la actividad se registre correctamente.
+- Dejar el formulario sin actividad y verificar el cierre de sesión.
+- Verificar que no quede un formulario utilizable después del cierre.
+
+Si la prueba falla:
+Registrar la actividad de los formularios y cerrarlos al terminar
+la sesión.
+
+
+12. CORTE DE CONEXIÓN O DESHABILITACIÓN CON UNA OPERACIÓN ABIERTA
+
+Estado: PENDIENTE DE PRUEBA ESPECÍFICA.
+
+Pruebas:
+- Abrir un formulario y desconectar la red.
+- Abrir un formulario y deshabilitar el cajero desde el servidor.
+- Interrumpir la conexión mientras se espera una respuesta.
+
+Verificar:
+- Que el cajero refleje el estado correcto.
+- Que los formularios anteriores no permitan continuar operando.
+- Que no se presenten resultados correspondientes a una sesión
+  que ya terminó.
+- Que los movimientos inciertos se puedan consultar.
+
+
+ORDEN PROPUESTO DE TRABAJO
+
+1. Bloqueo de movimientos pendientes.
+2. Cierre local de sesión.
+3. Restricciones del cambio de PIN.
+4. Presentación del máximo retirable.
+5. Pruebas de inactividad y cortes con formularios abiertos.
+6. Recuperación de referencias pendientes.
+7. Entrada numérica, mensajes y configuración.
+8. Conservación de datos al corregir formularios.
+9. Guardado de comprobantes en PDF.
+10. Compilación, actualización del cajero portable y pruebas finales.
+
+Estos trabajos corresponden al cliente. Se buscará conservar
+el protocolo y la base de datos que utiliza actualmente el servidor.

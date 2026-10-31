@@ -37,6 +37,7 @@ Para nuevas copias, Respaldar.ps1 crea y verifica un BAK. Si la instancia o la c
 
 Abrir Documentacion/00_Indice/GuiaRapidaDeRevision.md. Se incluyen scripts, documentación PDF, código fuente y pruebas como referencia. Para operar usar Iniciar-Servidor.cmd; no hace falta compilar la solución.
 
-El código fuente del cajero está incluido únicamente como referencia de la solución completa. Este RAR no contiene la aplicación portable del cajero: usar CajeroRed_Cajero.rar en las PCs cliente.
+El fuente del cajero forma parte de la solución y está actualizado a NETGEAR 2.1.0. Para entregar el portable a las PCs cliente, ejecutar Publicar-Cajero.ps1 y usar el paquete CajeroRed_Cajero.
 
 La documentación de resultados conserva las fechas reales de pruebas anteriores. No demuestra que esta instalación nueva ya fue validada. La integración NETGEAR se implementó conforme al MD recibido el 31/10/2026. Aplicar la migración 08 después de restaurar el respaldo antiguo y consultar Documentacion/08_IntegracionEntreGrupos. La prueba física con otros grupos sigue pendiente.
+Actualización 31/10/2026: después de restaurar el BAK anterior, aplicar Actualizar-Interbancario.ps1 para 08/09. Nunca reinstalar los datos sobre una base restaurada.

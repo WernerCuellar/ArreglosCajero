@@ -28,4 +28,10 @@ Ejecutar-Pruebas.ps1 -ServidorSql '.' crea y elimina una base temporal aislada. 
 Tras compilar, Pruebas.dll --revision-servidor verifica el ojo y los totales filtrados.
 Los ensayos locales no sustituyen las pruebas físicas con otros grupos.
 
-El repositorio incluye el cliente como referencia de la solución; excluye configuración privada, respaldo BAK operativo, ejecutables, cachés y registros locales. El paquete local conserva el respaldo original.
+El repositorio incluye también el fuente del cliente; excluye configuración privada, respaldo BAK operativo, ejecutables, cachés y registros locales. El paquete local conserva el respaldo original.
+
+## Cajero NETGEAR 2.1.0
+Se implementan los cambios de cambios.txt: recuperación persistente, bloqueo de movimientos, cierre inmediato, validaciones, control de formularios y comprobantes PDF.
+Aplicar también 09_CompatibilidadCajero.sql (incluido en Actualizar-Interbancario.ps1).
+Publicar-Cajero.ps1 actualiza la carpeta hermana CajeroRed_Cajero y su CMD preservando configuración privada.
+Pruebas.dll --revision-cajero ejecuta los ensayos del cliente. Detalle en Documentacion/09_Entrega/CorreccionesCajero_2026-10-31.md.

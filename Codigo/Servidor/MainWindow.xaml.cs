@@ -211,7 +211,7 @@ public partial class MainWindow : Window
     "Bancos de la red"=>"SELECT CodigoBanco,NombreBanco,IP,Puerto,EsPropio,Confiable,Activo,LimiteDiario,CASE WHEN FechaUltimoReinicio=CAST(SYSDATETIME() AS date) THEN TransferidoHoy ELSE 0 END TransferidoHoy,LimiteDiario-CASE WHEN FechaUltimoReinicio=CAST(SYSDATETIME() AS date) THEN TransferidoHoy ELSE 0 END CupoDisponibleHoy FROM dbo.BancoRed ORDER BY EsPropio DESC,CodigoBanco",
     "Transferencias"=>"SELECT * FROM dbo.vw_TransferenciasUsuario WHERE Fecha>=@d AND Fecha<@h ORDER BY Fecha DESC",
     "Cajeros"=>"SELECT Codigo,Estado,IP,Efectivo,B200,B100,B50,B20,B10,B5,B1,UltimoHeartbeat,UltimaTransaccion,Nombre,Ubicacion,Equipo,Version,Activo,Habilitado,Conectado,FechaInicializacion FROM dbo.vw_EstadoCajeros ORDER BY Codigo",
-    "Usuarios"=>"SELECT v.*,u.NumeroCuenta FROM dbo.vw_Usuarios v JOIN dbo.Usuario u ON u.Id=v.Id ORDER BY v.Id",
+    "Usuarios"=>"SELECT v.*,CASE WHEN u.NumeroCuenta IS NULL THEN NULL ELSE '**** '+RIGHT(u.NumeroCuenta,4) END NumeroCuenta FROM dbo.vw_Usuarios v JOIN dbo.Usuario u ON u.Id=v.Id ORDER BY v.Id",
     "Transacciones"=>"SELECT * FROM dbo.vw_Transacciones WHERE Fecha>=@d AND Fecha<@h ORDER BY Fecha DESC",
     "Depósitos"=>"SELECT * FROM dbo.vw_Transacciones WHERE Tipo='DEPOSITO' AND Fecha>=@d AND Fecha<@h ORDER BY Fecha DESC",
     "Retiros"=>"SELECT t.*,ISNULL(r.RetiradoHoy,0) ConsumoHoy FROM dbo.vw_Transacciones t LEFT JOIN dbo.vw_RetiradoHoyPorUsuario r ON r.UsuarioId=t.UsuarioId WHERE t.Tipo='RETIRO' AND t.Fecha>=@d AND t.Fecha<@h ORDER BY t.Fecha DESC",

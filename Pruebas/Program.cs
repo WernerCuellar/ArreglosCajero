@@ -18,7 +18,7 @@ using Microsoft.Data.SqlClient;
 
 namespace CajeroRed.Pruebas;
 
-internal static class Program
+internal static partial class Program
 {
  private static int aprobadas;
  private static string raiz="";
@@ -30,6 +30,7 @@ internal static class Program
   raiz=Path.GetFullPath(Path.Combine(AppContext.BaseDirectory,"../../../../"));
   try
   {
+   if(args.Contains("--revision-cajero"))return RevisionCajero();
    if(args.Contains("--revision-servidor")){RevisionServidor();return 0;}
    if(args.Contains("--entrada-tarjeta")){EntradaTarjeta();return 0;}
    if(args.Contains("--capturas")){Capturas();return 0;}
@@ -160,7 +161,7 @@ internal static class Program
     string tarjeta=$"400000000000{usuario:0000}";var a=await c.Enviar("LOGIN",new {tarjeta,pin});
     Verificar(a.Codigo=="00"&&!a.Datos.TryGetProperty("tokenServidor",out _),"token visible solo en servidor · "+c.Cajero);
     string token;lock(tokens)token=tokens[c.Cajero];
-    var b=await c.Enviar("VALIDAR_TOKEN",new {tarjeta,token});if(b.Codigo!="00")throw new Exception(b.Serializar());c.Sesion=b.Datos.GetProperty("sesion").GetString();
+    var b=await c.Enviar("VALIDAR_TOKEN",new {tarjeta,token});if(b.Codigo!="00")throw new Exception(b.Serializar());if(b.Datos.GetProperty("usuarioId").GetInt32()!=usuario)throw new Exception("Identidad de sesión incorrecta.");c.Sesion=b.Datos.GetProperty("sesion").GetString();
    }
    object Billetes(int monto)=>new {monto,desglose=new Dictionary<int,int>{{100,monto/100}}};
    await Login(c1,1);await Login(c2,1);
@@ -176,6 +177,7 @@ internal static class Program
    Verificar(retiro.Codigo=="00"&&retiro.Datos.GetRawText()==repetido.Datos.GetRawText(),"idempotencia devuelve el mismo resultado sin doble cargo");
    Verificar((await c1.Enviar("RETIRO",Billetes(200),referencia)).Codigo=="94","rechazo del mismo ID con monto distinto");
    Verificar((await c1.Enviar("ESTADO_SOLICITUD",new {idOriginal=referencia})).Datos.GetProperty("codigo").GetString()=="00","consulta de estado después de incertidumbre");
+   Verificar((await c2.Enviar("ESTADO_SOLICITUD",new {idOriginal=referencia})).Codigo=="25","otro usuario no consulta una referencia ajena");
    // Forzar existencias controladas en la base AISLADA para probar alternativas.
    await bd.Ejecutar("UPDATE dbo.InventarioCajero SET Cantidad=2 WHERE Cajero='ATM-01' AND Denominacion=100");
    var alternativa=await c1.Enviar("RETIRO",Billetes(300));
@@ -183,7 +185,8 @@ internal static class Program
    var antes=await bd.Consultar("SELECT Saldo FROM dbo.Usuario WHERE Id=3");
    var deposito=await c1.Enviar("DEPOSITO",new{monto=239,desglose=new Dictionary<int,int>{{200,1},{20,1},{10,1},{5,1},{1,4}}});
    Verificar(deposito.Codigo=="00"&&deposito.Datos.GetProperty("saldo").GetDecimal()==(decimal)antes.Rows[0][0]+239,"depósito actualiza saldo con monto libre Q239");
-   Verificar((await c1.Enviar("CAMBIO_PIN",new{pinActual="1234",pinNuevo="5678"})).Codigo=="00","cambio de PIN");
+   var cambioPin=await c1.Enviar("CAMBIO_PIN",new{pinActual="1234",pinNuevo="5678"});
+   Verificar(cambioPin.Codigo=="00"&&cambioPin.Datos.TryGetProperty("fecha",out _),"cambio de PIN con fecha del servidor");
    Verificar((await c2.Enviar("LOGIN",new{tarjeta="4000000000000003",pin="1234"})).Codigo=="55","PIN anterior rechazado en otro cajero");
    await Login(c2,3,"5678");
    for(int i=0;i<4;i++)Verificar((await c2.Enviar("DEPOSITO",new{monto=1,desglose=new Dictionary<int,int>{{1,1}}})).Codigo=="00","depósito de prueba para historial "+(i+1));

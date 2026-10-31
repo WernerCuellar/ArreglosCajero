@@ -1,4 +1,4 @@
-USE BD_CajeroRed_Fase2;
+﻿USE BD_CajeroRed_Fase2;
 GO
 CREATE OR ALTER PROCEDURE dbo.sp_Alertas @Cajero varchar(24)
 AS
@@ -115,13 +115,13 @@ BEGIN
    SET @ses=CONVERT(varchar(36),NEWID());
    INSERT dbo.Sesion(Id,UsuarioId,TarjetaId,Cajero,Resultado) VALUES(@ses,@u,@t,@Cajero,'00');
    INSERT dbo.Bitacora(Origen,Accion,Detalle) VALUES(@Cajero,'ACCESO',CONCAT('Usuario ',@u));
-   SET @datos=(SELECT @ses sesion,@temporal debeCambiarPin,(SELECT Nombre FROM dbo.Usuario WHERE Id=@u) nombre FOR JSON PATH,WITHOUT_ARRAY_WRAPPER);
+   SET @datos=(SELECT @ses sesion,@u usuarioId,@temporal debeCambiarPin,(SELECT Nombre FROM dbo.Usuario WHERE Id=@u) nombre FOR JSON PATH,WITHOUT_ARRAY_WRAPPER);
    GOTO Terminar;
   END;
   UPDATE dbo.Sesion SET UltimaActividad=@fecha WHERE Id=@Sesion;
   IF @Tipo='ESTADO_SOLICITUD'
   BEGIN
-   SELECT @datos=(SELECT Codigo codigo,Mensaje mensaje,JSON_QUERY(Datos) datos FROM dbo.SolicitudOperacion
+   SELECT @datos=(SELECT Solicitud idOriginal,UsuarioId usuarioId,Codigo codigo,Mensaje mensaje,JSON_QUERY(Datos) datos FROM dbo.SolicitudOperacion
     WHERE Cajero=@Cajero AND UsuarioId=@u AND Solicitud=JSON_VALUE(@Json,'$.idOriginal') FOR JSON PATH,WITHOUT_ARRAY_WRAPPER);
    IF NULLIF(@datos,'') IS NULL BEGIN SET @codigo='25';SET @mensaje=N'No existe resultado confirmado. Consulte al administrador antes de repetir.';SET @datos='{}';END;
    GOTO Terminar;
@@ -137,7 +137,7 @@ BEGIN
   BEGIN SET @codigo='58';SET @mensaje=N'Debe cambiar su PIN temporal antes de operar.';GOTO Terminar;END;
   SELECT @retirado=ISNULL(SUM(Monto),0) FROM dbo.Transaccion WHERE UsuarioId=@u AND Tipo='RETIRO' AND CodigoRespuesta='00' AND Fecha>=@hoy AND Fecha<DATEADD(day,1,@hoy);
   IF @Tipo='CONSULTA_SALDO'
-  BEGIN SET @datos=(SELECT @saldo saldo,@limite limiteDiario,CASE WHEN @limite>@retirado THEN @limite-@retirado ELSE 0 END disponibleHoy,@retirado retiradoHoy FOR JSON PATH,WITHOUT_ARRAY_WRAPPER);GOTO Terminar;END;
+  BEGIN SET @datos=(SELECT @fecha fecha,@saldo saldo,@limite limiteDiario,CASE WHEN @limite>@retirado THEN @limite-@retirado ELSE 0 END disponibleHoy,@retirado retiradoHoy FOR JSON PATH,WITHOUT_ARRAY_WRAPPER);GOTO Terminar;END;
   IF @Tipo='ULTIMAS_TRANSACCIONES'
   BEGIN SET @datos=(SELECT TOP(5) Fecha fecha,Tipo tipo,Monto monto,Cajero cajero FROM dbo.Transaccion WHERE UsuarioId=@u AND CodigoRespuesta='00' ORDER BY Fecha DESC,Id DESC FOR JSON PATH);GOTO Terminar;END;
   IF @Tipo='CAMBIO_PIN'
@@ -153,6 +153,7 @@ BEGIN
    INSERT dbo.CambioPin(UsuarioId,Cajero,Origen,Resultado) VALUES(@u,@Cajero,'USUARIO','00');
    UPDATE dbo.Token SET Usado=1 WHERE UsuarioId=@u;
    UPDATE dbo.Sesion SET Fin=@fecha WHERE UsuarioId=@u AND Id<>@Sesion AND Fin IS NULL;
+   SET @datos=(SELECT @fecha fecha FOR JSON PATH,WITHOUT_ARRAY_WRAPPER);
    SET @mensaje=N'PIN actualizado en toda la red.';GOTO GuardarResultado;
   END;
   IF @Tipo NOT IN('RETIRO','DEPOSITO') BEGIN SET @codigo='30';SET @mensaje=N'Operación desconocida.';GOTO Terminar;END;
