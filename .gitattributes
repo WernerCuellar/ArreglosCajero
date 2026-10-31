@@ -1,0 +1,6 @@
+* text=auto
+*.pdf binary
+*.png binary
+*.xlsx binary
+*.bak binary
+Documentacion/08_IntegracionEntreGrupos/PROTOCOLO_CONEXION_BANCOS_LLM.md -whitespace

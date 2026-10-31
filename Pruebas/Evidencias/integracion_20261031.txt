@@ -1,0 +1,85 @@
+OK · desglose acotado encuentra solución cuando greedy simple falla
+OK · sin alternativa cuando no se puede representar el monto
+OK · monto libre Q239
+OK · JSON preserva correlación de solicitud
+OK · montos sin separadores ambiguos
+OK · Excel real con datos tratados como texto y sin inyección de fórmulas
+Base AISLADA de pruebas: BD_CajeroRed_Pruebas_142abce56c1a
+OK · usuario propio con permisos limitados en cada conexión
+OK · permisos impiden actualizar saldo fuera de procedimientos
+OK · PBKDF2: autenticación administrativa
+OK · rechazo de contraseña administrativa incorrecta
+OK · inventario de prueba Q10000
+OK · inicialización solo una vez al día
+OK · rechazo de carga sin inicialización
+OK · rechazo de capacidad mayor a Q30000
+OK · tres conexiones TCP persistentes simultáneas (locales)
+OK · tres conexiones permanecen estables más de 30 segundos con heartbeat
+OK · rechazo de cajero no dado de alta
+OK · rechazo de dos conexiones con el mismo código
+OK · token visible solo en servidor · ATM-01
+OK · token visible solo en servidor · ATM-02
+OK · retiro Q300 en ATM-01
+OK · límite diario global rechaza segundo retiro Q300
+OK · token visible solo en servidor · ATM-01
+OK · token visible solo en servidor · ATM-02
+OK · concurrencia: solo un retiro aprobado y saldo no negativo
+OK · saldo final consistente tras concurrencia
+OK · token visible solo en servidor · ATM-01
+OK · idempotencia devuelve el mismo resultado sin doble cargo
+OK · rechazo del mismo ID con monto distinto
+OK · consulta de estado después de incertidumbre
+OK · desglose alternativo propuesto sin debitar
+OK · depósito actualiza saldo con monto libre Q239
+OK · cambio de PIN
+OK · PIN anterior rechazado en otro cajero
+OK · token visible solo en servidor · ATM-02
+OK · depósito de prueba para historial 1
+OK · depósito de prueba para historial 2
+OK · depósito de prueba para historial 3
+OK · depósito de prueba para historial 4
+OK · últimas cinco transacciones del usuario incluyen distintos cajeros
+OK · depósito rechazado si supera Q30000
+OK · intento fallido global 1
+OK · intento fallido global 2
+OK · intento fallido global 3
+OK · bloqueo compartido por todos los cajeros
+OK · token visible solo en servidor · ATM-03
+OK · token de un solo uso: no puede reutilizarse
+OK · token expirado rechazado
+OK · tarjeta reemplazada se rechaza como inactiva
+OK · cambiar tarjeta conserva consumo del límite diario
+OK · PIN temporal obliga a cambiar antes de operar
+OK · cambio obligatorio de PIN temporal
+OK · nueva tarjeta operativa conserva disponible Q200
+OK · comando remoto y rechazo en servidor fuera de servicio
+OK · token visible solo en servidor · ATM-02
+OK · rollback completo cuando falla el registro de la transacción
+OK · expiración de sesión en servidor
+OK · heartbeat vencido desconecta y registra alerta
+OK · reconexión automática conserva identidad del cajero
+OK · auditoría de conexión y reconexión
+OK · PIN almacenado solo como SHA256 con salt
+OK · IB_PING comparte listener TCP y admite tipo sin distinguir mayúsculas
+OK · IB_VERIFICAR_CUENTA acepta numeroCuenta
+OK · transferencia de banco no autorizado rechazada
+OK · transferencia entrante acreditada
+OK · reintento de token devuelve confirmación original
+OK · token repetido no duplica saldo
+OK · token con monto diferente rechazado
+OK · consulta acepta alias cuentaDestino
+OK · cuenta inexistente devuelve 14
+OK · monto negativo no se acredita
+OK · campos nulos devuelven error de formato
+OK · fallo SQL de transferencia no informa aprobación
+OK · rollback interbancario conserva saldo
+OK · rollback interbancario conserva cupo
+OK · concurrencia respeta cupo del banco
+OK · extensión de consulta recupera confirmación persistida
+OK · sondeos interbancarios no registran ni desconectan cajeros
+OK · descubrimiento UDP responde al remitente con formato acordado
+OK · transferencia saliente confirmada por el par
+OK · respuesta perdida deja transferencia incierta
+OK · timeout conserva reserva y no devuelve dinero posiblemente acreditado
+Base aislada de pruebas eliminada.
+RESULTADO: 82 comprobaciones correctas.

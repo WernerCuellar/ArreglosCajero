@@ -1,0 +1,5 @@
+{
+  "cadenaSql": "Server=.\\SQLEXPRESS;Database=BD_CajeroRed_Fase2;Integrated Security=True;Encrypt=True;TrustServerCertificate=True",
+  "nombreBanco": "Sistema bancario",
+  "nota": "Ejemplo local con autenticación Windows. Para la entrega use el login propio según el manual de instalación."
+}

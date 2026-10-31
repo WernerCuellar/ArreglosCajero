@@ -1,0 +1,5 @@
+OK · permite pegar una tarjeta de 16 dígitos
+OK · rechaza pegar más de 16 dígitos sin truncar la tarjeta
+OK · bloquea letras y espacios tanto al escribir como al pegar
+OK · no permite agregar un dígito 17
+OK · permite reemplazar dígitos seleccionados sin superar 16

@@ -1,0 +1,9 @@
+servidor_resumen.png
+cajero_acceso.png
+cajero_token.png
+cajero_menu.png
+servidor_cajeros.png
+OK · navegación carga la tabla de usuarios sin esperar al siguiente refresco
+servidor_usuarios.png
+servidor_transacciones.png
+OK · interfaz cierra sesión cuando el reloj supera 60 segundos de inactividad

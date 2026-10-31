@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+ <PropertyGroup><UseWPF>true</UseWPF></PropertyGroup>
+ <ItemGroup><ProjectReference Include="../ProtocoloCompartido/ProtocoloCompartido.csproj" /></ItemGroup>
+ <ItemGroup><Resource Include="Assets/logo.png" /></ItemGroup>
+</Project>

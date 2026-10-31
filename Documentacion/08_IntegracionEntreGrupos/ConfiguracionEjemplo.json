@@ -1,0 +1,10 @@
+{
+  "nombreBanco": "NETGEAR",
+  "codigoBanco": "BANC02",
+  "codigoProvisional": true,
+  "puertoTcp": 5000,
+  "puertoUdp": 5005,
+  "limiteDiario": 25000,
+  "configuracionPersistida": "dbo.BancoRed",
+  "bancosExternos": []
+}

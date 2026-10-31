@@ -1,0 +1,6 @@
+OK · contraseña oculta inicialmente
+OK · ojo muestra contraseña
+OK · editar y ocultar conserva contraseña
+OK · totales del filtro excluyen rechazos
+OK · sin resultados total cero
+RESULTADO: 5 comprobaciones de interfaz correctas.

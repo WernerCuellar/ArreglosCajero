@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+ <PropertyGroup><OutputType>WinExe</OutputType><UseWPF>true</UseWPF></PropertyGroup>
+ <ItemGroup>
+  <ProjectReference Include="../Aplicacion/Aplicacion.csproj"/>
+  <ProjectReference Include="../PresentacionCompartida/PresentacionCompartida.csproj"/>
+ </ItemGroup>
+ <ItemGroup><None Include="../../Configuracion/cajero.ejemplo.json" Link="cajero.json" CopyToOutputDirectory="PreserveNewest"/></ItemGroup>
+</Project>

@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk">
+ <PropertyGroup><OutputType>Exe</OutputType><UseWPF>true</UseWPF></PropertyGroup>
+ <ItemGroup><ProjectReference Include="../Codigo/Servidor/Servidor.csproj"/><ProjectReference Include="../Codigo/Cajero/Cajero.csproj"/></ItemGroup>
+</Project>

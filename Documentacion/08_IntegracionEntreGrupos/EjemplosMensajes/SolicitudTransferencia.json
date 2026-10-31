@@ -1,0 +1,15 @@
+{
+  "tipo": "IB_TRANSFERIR",
+  "cajero": "SERVER",
+  "idMensaje": "ejemplo-0001",
+  "timestamp": "2026-10-31 12:00:00",
+  "tokenTransferencia": "TRF-20261031-482910",
+  "bancoOrigen": "BANC02",
+  "cuentaOrigen": "4000000000000001",
+  "nombreOrigen": "Usuario ficticio NETGEAR",
+  "bancoDestino": "BANC01",
+  "cuentaDestino": "2002000001",
+  "nombreDestino": "Usuario ficticio destino",
+  "monto": 25.0,
+  "concepto": "Prueba"
+}
