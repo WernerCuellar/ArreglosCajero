@@ -4,7 +4,7 @@ $ErrorActionPreference='Stop'
 if(!$Programa){$Programa=Join-Path $PSScriptRoot 'Distribucion\Servidor\Servidor.exe'}
 $programa=[IO.Path]::GetFullPath($Programa)
 if(!(Test-Path -LiteralPath $programa)){
- $programa=Join-Path $PSScriptRoot 'Aplicaciones\Servidor\NETGEAR_Servidor_2.2.0.exe'
+ $programa=Join-Path $PSScriptRoot 'Aplicaciones\Servidor\NETGEAR_Servidor_2.2.1.exe'
  if(!(Test-Path -LiteralPath $programa)){throw 'Inicie una vez Iniciar-Servidor.cmd o indique -Programa con la ruta del EXE.'}
 }
 foreach($regla in @(@{Nombre="NETGEAR-Servidor-TCP-$Puerto";Protocolo='TCP';Puerto=$Puerto},@{Nombre='NETGEAR-Discovery-UDP-5005';Protocolo='UDP';Puerto=5005})){

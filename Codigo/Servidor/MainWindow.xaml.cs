@@ -27,7 +27,7 @@ public partial class MainWindow : Window
  private readonly List<Window> tokens=[];
  public MainWindow()
  {
-  InitializeComponent();
+  InitializeComponent();Title="NETGEAR · Servidor 2.2.1";
    try
    {
     var args=Environment.GetCommandLineArgs();for(int i=1;i<args.Length-1;i++)if(args[i]=="--config")local=Path.GetFullPath(args[i+1]);
@@ -83,7 +83,7 @@ public partial class MainWindow : Window
  {
   UsuarioActual.Text=admin.Usuario+" · "+admin.Rol;
   var param=await admin.Consultar("SELECT Valor FROM dbo.Parametro WHERE Clave='Puerto'");puerto=Convert.ToInt32(param.Rows[0][0]);
-  string[] paginas=["Resumen","Cajeros","Usuarios","Transacciones","Depósitos","Retiros","Cambios de PIN","Alertas","Auditoría","Arqueo","Resumen diario","Bancos de la red","Transferencias","Configuración"];
+  string[] paginas=["Resumen","Cajeros","Usuarios","Transferencias","Transacciones","Depósitos","Retiros","Cambios de PIN","Alertas","Auditoría","Arqueo","Resumen diario","Bancos de la red","Configuración"];
   Menu.Children.Clear();foreach(var item in paginas)Menu.Children.Add(Ui.BotonAsync(item,()=>MostrarPagina(item)));
   ControlesServicio.Children.Clear();
   ControlesServicio.Children.Add(Ui.BotonAsync("Iniciar servicio",async()=>{if(servidor.Activo)return;var valor=await admin.Consultar("SELECT Valor FROM dbo.Parametro WHERE Clave='Puerto'");puerto=Convert.ToInt32(valor.Rows[0][0]);await servidor.Iniciar(puerto);await Refrescar();}));
@@ -105,9 +105,10 @@ public partial class MainWindow : Window
   var acciones=new WrapPanel();DockPanel.SetDock(acciones,Dock.Top);p.Children.Add(acciones);
   if(nombre is "Transacciones" or "Depósitos" or "Retiros" or "Cambios de PIN" or "Auditoría" or "Resumen diario" or "Transferencias")
   {
-   desde=new DatePicker(){SelectedDate=DateTime.Today,Width=130,Margin=new Thickness(4)};hasta=new DatePicker(){SelectedDate=DateTime.Today,Width=130,Margin=new Thickness(4)};
+   desde=new DatePicker(){SelectedDate=nombre is "Transferencias" or "Transacciones"?DateTime.Today.AddDays(-30):DateTime.Today,Width=130,Margin=new Thickness(4)};hasta=new DatePicker(){SelectedDate=DateTime.Today,Width=130,Margin=new Thickness(4)};
    acciones.Children.Add(Ui.Texto("Desde"));acciones.Children.Add(desde);acciones.Children.Add(Ui.Texto("Hasta"));acciones.Children.Add(hasta);
    acciones.Children.Add(Ui.BotonAsync("Aplicar fechas",Refrescar));
+   if(nombre is "Transferencias" or "Transacciones")acciones.Children.Add(Ui.BotonAsync("Todo el historial",async()=>{desde.SelectedDate=new DateTime(1900,1,1);hasta.SelectedDate=DateTime.Today;await Refrescar();}));
   }
   AccionesInterbancarias(nombre,acciones);
   if(nombre=="Cajeros")AccionesCajero(acciones);
@@ -142,7 +143,9 @@ public partial class MainWindow : Window
  private UIElement Encabezado(string n)
  {
   var panel=new StackPanel();DockPanel.SetDock(panel,Dock.Top);panel.Children.Add(Ui.Titulo(n));
-  string ayuda=n switch {"Cajeros"=>"Seleccione una fila para gestionar efectivo o enviar comandos. Verde: en línea; naranja: advertencia; rojo: falla.","Usuarios"=>"Registro breve · saldo y límite global · historial de tarjetas y límites.","Arqueo"=>"Cuadre desde la última inicialización: efectivo inicial + cargas + depósitos − retiros.","Configuración"=>"Parámetros guardados en SQL Server. La vigencia del token no puede superar 120 segundos.",_=>"Información centralizada de todos los cajeros · actualización cada 4 segundos."};
+  string ayuda=n switch {"Cajeros"=>"Seleccione una fila para gestionar efectivo o enviar comandos. Verde: en línea; naranja: advertencia; rojo: falla.","Usuarios"=>"Seleccione una cuenta y abra Historial del usuario para ver sus movimientos, transferencias enviadas y recibidas.",
+   "Transferencias"=>"Entre cuentas NETGEAR y otros bancos · una fila por envío · fecha, origen, destino, monto, estado y token. Use Todo el historial para ampliar las fechas.",
+   "Transacciones"=>"Movimientos de todas las cuentas: retiros, depósitos y transferencias enviadas o recibidas. Las transferencias internas generan un movimiento por cada usuario.","Arqueo"=>"Cuadre desde la última inicialización: efectivo inicial + cargas + depósitos − retiros.","Configuración"=>"Parámetros guardados en SQL Server. La vigencia del token no puede superar 120 segundos.",_=>"Información centralizada de todos los cajeros · actualización cada 4 segundos."};
   panel.Children.Add(Ui.Texto(ayuda,12));return panel;
  }
  private DataRowView Seleccion()=>tabla?.SelectedItem as DataRowView??throw new ArgumentException("Seleccione una fila de la tabla.");
@@ -190,7 +193,7 @@ public partial class MainWindow : Window
   p.Children.Add(Ui.BotonAsync(label,async()=>{var r=Seleccion();if(MessageBox.Show(this,$"{label}: {r["Nombre"]}. ¿Confirmar?",label,MessageBoxButton.YesNo)!=MessageBoxResult.Yes)return;await admin.Accion(tipo,new {usuarioId=r["Id"]});await Refrescar();}));
   p.Children.Add(Ui.BotonAsync("Historial del usuario",async()=>
   {
-   var r=Seleccion();var t=await admin.Consultar("SELECT TOP(50) * FROM dbo.vw_Transacciones WHERE UsuarioId=@u ORDER BY Fecha DESC;",("@u",r["Id"]));
+   var r=Seleccion();var t=await admin.Consultar(ReportesMovimientos.PorUsuario,("@u",r["Id"]));
    var tarjetas=await admin.Consultar("SELECT '**** '+RIGHT(Numero,4) Tarjeta,Activa,Asignada,Baja FROM dbo.Tarjeta WHERE UsuarioId=@u ORDER BY Asignada DESC",("@u",r["Id"]));
    var limites=await admin.Consultar("SELECT Anterior,Nuevo,AdministradorId,Fecha FROM dbo.HistorialLimite WHERE UsuarioId=@u ORDER BY Fecha DESC",("@u",r["Id"]));
    var tabs=new TabControl();foreach(var (n,d) in new[]{("Movimientos",t),("Transferencias",await admin.Consultar("SELECT * FROM dbo.vw_TransferenciasUsuario WHERE UsuarioId=@u ORDER BY Fecha DESC",("@u",r["Id"]))),("Tarjetas",tarjetas),("Límites",limites)})tabs.Items.Add(new TabItem(){Header=n,Content=Ui.Tabla(d.DefaultView)});
@@ -210,10 +213,10 @@ public partial class MainWindow : Window
    {
     "Resumen"=>"SELECT * FROM dbo.vw_ResumenDiario",
     "Bancos de la red"=>"SELECT CodigoBanco,NombreBanco,IP,Puerto,EsPropio,Confiable,Activo,LimiteDiario,CASE WHEN FechaUltimoReinicio=CAST(SYSDATETIME() AS date) THEN TransferidoHoy ELSE 0 END TransferidoHoy,LimiteDiario-CASE WHEN FechaUltimoReinicio=CAST(SYSDATETIME() AS date) THEN TransferidoHoy ELSE 0 END CupoDisponibleHoy FROM dbo.BancoRed ORDER BY EsPropio DESC,CodigoBanco",
-    "Transferencias"=>"SELECT * FROM dbo.vw_TransferenciasUsuario WHERE Fecha>=@d AND Fecha<@h ORDER BY Fecha DESC",
+    "Transferencias"=>ReportesMovimientos.Transferencias,
     "Cajeros"=>"SELECT Codigo,Estado,IP,Efectivo,B200,B100,B50,B20,B10,B5,B1,UltimoHeartbeat,UltimaTransaccion,Nombre,Ubicacion,Equipo,Version,Activo,Habilitado,Conectado,FechaInicializacion FROM dbo.vw_EstadoCajeros ORDER BY Codigo",
     "Usuarios"=>"SELECT v.*,CASE WHEN u.NumeroCuenta IS NULL THEN NULL ELSE '**** '+RIGHT(u.NumeroCuenta,4) END NumeroCuenta FROM dbo.vw_Usuarios v JOIN dbo.Usuario u ON u.Id=v.Id ORDER BY v.Id",
-    "Transacciones"=>"SELECT * FROM dbo.vw_Transacciones WHERE Fecha>=@d AND Fecha<@h ORDER BY Fecha DESC",
+    "Transacciones"=>ReportesMovimientos.Movimientos,
     "Depósitos"=>"SELECT * FROM dbo.vw_Transacciones WHERE Tipo='DEPOSITO' AND Fecha>=@d AND Fecha<@h ORDER BY Fecha DESC",
     "Retiros"=>"SELECT t.*,ISNULL(r.RetiradoHoy,0) ConsumoHoy FROM dbo.vw_Transacciones t LEFT JOIN dbo.vw_RetiradoHoyPorUsuario r ON r.UsuarioId=t.UsuarioId WHERE t.Tipo='RETIRO' AND t.Fecha>=@d AND t.Fecha<@h ORDER BY t.Fecha DESC",
     "Cambios de PIN"=>"SELECT p.Id,u.Nombre,p.Cajero,p.Fecha,p.Origen,p.Resultado FROM dbo.CambioPin p JOIN dbo.Usuario u ON u.Id=p.UsuarioId WHERE p.Fecha>=@d AND p.Fecha<@h ORDER BY p.Fecha DESC",
@@ -259,6 +262,11 @@ public partial class MainWindow : Window
    decimal total=aprobados.Sum(r=>Convert.ToDecimal(r["Monto"]));int usuarios=aprobados.Select(r=>r["UsuarioId"]).Distinct().Count();
    extra=$" · Aprobado Q {total:N2} · Promedio por usuario Q {(usuarios>0?total/usuarios:0):N2}";
   }
+  if(pagina=="Transferencias")
+  {
+   var filas=v.Cast<DataRowView>().ToArray();var aprobadas=filas.Where(r=>(string)r["Estado"]=="APROBADA").ToArray();
+   extra=$" · {aprobadas.Length} aprobadas · Total aprobado Q {aprobadas.Sum(r=>Convert.ToDecimal(r["Monto"])):N2} · {filas.Count(r=>(string)r["Estado"] is "PENDIENTE" or "RESERVADA" or "INCIERTA")} pendientes";
+  }
   EstadoPie.Text=$"{v.Count} registros filtrados · actualizado {DateTime.Now:HH:mm:ss}"+extra;
  }
  private void ActualizarDirecciones()
@@ -296,6 +304,7 @@ public partial class MainWindow : Window
    p.Children.Add(Ui.Texto((dinero?"Q ":"")+(r[c] is DBNull?"0":Convert.ToDecimal(r[c]).ToString(dinero?"N2":"N0")),24));var b=Ui.Tarjeta(p);b.Margin=new Thickness(0,0,12,12);tarjetas.Children.Add(b);
   }
   metricas.Children.Clear();metricas.Children.Add(tarjetas);
+  metricas.Children.Add(Ui.BotonAsync("Ver transferencias entre cuentas y bancos",()=>MostrarPagina("Transferencias")));
   var acceso=await admin.Consultar("SELECT TOP(1) u.Nombre,s.Inicio,s.Cajero FROM dbo.Sesion s JOIN dbo.Usuario u ON u.Id=s.UsuarioId WHERE s.Resultado='00' ORDER BY s.Inicio DESC");
   var cambios=await admin.Consultar("SELECT COUNT(DISTINCT UsuarioId) Usuarios FROM dbo.CambioPin WHERE Resultado='00' AND Origen='USUARIO' AND Fecha>=CAST(SYSDATETIME() AS date)");
   metricas.Children.Add(Ui.Texto("Usuarios que cambiaron PIN hoy: "+cambios.Rows[0][0]+(acceso.Rows.Count==0?" · Sin accesos de usuarios todavía.":$" · Último acceso: {acceso.Rows[0]["Nombre"]} · {acceso.Rows[0]["Inicio"]:yyyy-MM-dd HH:mm:ss} · {acceso.Rows[0]["Cajero"]}"),12));

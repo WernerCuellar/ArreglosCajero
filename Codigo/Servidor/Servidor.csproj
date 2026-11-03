@@ -1,5 +1,5 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
- <PropertyGroup><OutputType>WinExe</OutputType><Version>2.2.0</Version><UseWPF>true</UseWPF></PropertyGroup>
+<Project Sdk="Microsoft.NET.Sdk">
+ <PropertyGroup><OutputType>WinExe</OutputType><Version>2.2.1</Version><UseWPF>true</UseWPF></PropertyGroup>
  <ItemGroup>
   <ProjectReference Include="../Aplicacion/Aplicacion.csproj"/>
   <ProjectReference Include="../PresentacionCompartida/PresentacionCompartida.csproj"/>

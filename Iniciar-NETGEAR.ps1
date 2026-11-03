@@ -4,7 +4,7 @@ param([Parameter(Mandatory=$true)][ValidateSet('Cajero','Servidor')][string]$Com
  [Parameter(Position=2)][string]$Puerto='', [switch]$Actualizar)
 $ErrorActionPreference='Stop'
 try {
- $version='2.2.0';$repositorio='https://github.com/WernerCuellar/ArreglosCajero'
+ $version=if($Componente -eq 'Servidor'){'2.2.1'}else{'2.2.0'};$repositorio='https://github.com/WernerCuellar/ArreglosCajero'
  $nombre='NETGEAR_'+$Componente+'_'+$version+'.exe'
  $carpeta=Join-Path $PSScriptRoot ("Aplicaciones\"+$Componente)
  try{New-Item -ItemType Directory -Path $carpeta -Force | Out-Null}

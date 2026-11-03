@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
@@ -56,7 +56,9 @@ public partial class MainWindow
   if(nombre=="Transferencias")
    acciones.Children.Add(Ui.BotonAsync("Consultar / conciliar",async()=>
    {
-    var seleccionado=Seleccion();string token=(string)seleccionado["TokenTransferencia"];
+    var seleccionado=Seleccion();
+    if((string)seleccionado["Tipo"]!="INTERBANCARIA"||(string)seleccionado["Direccion"]!="SALIENTE"||(string)seleccionado["Estado"] is not ("INCIERTA" or "RESERVADA"))throw new ArgumentException("Seleccione una transferencia interbancaria saliente pendiente de confirmación.");
+    string token=(string)seleccionado["TokenTransferencia"];
     var r=await servidor.Interbancario.Conciliar(admin.Id!.Value,token);
     Ui.Mostrar(this,"Estado de "+token,r.Mensaje+"\n"+r.Datos+"\nUna respuesta sin confirmación mantiene el saldo reservado.");
     await Refrescar();

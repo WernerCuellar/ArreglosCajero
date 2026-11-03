@@ -68,6 +68,16 @@ internal static partial class Program
   Verificar(t.DefaultView.Count==2&&pie.Contains(100m.ToString("N2"))&&!pie.Contains(999m.ToString("N2")),"totales del filtro excluyen rechazos");
   filtro.Text="inexistente";tipo.GetMethod("Filtrar",flags)!.Invoke(w,null);
   Verificar(t.DefaultView.Count==0&&((TextBlock)w.FindName("EstadoPie")).Text.Contains(0m.ToString("N2")),"sin resultados total cero");
+  ((Task)tipo.GetMethod("MostrarPagina",flags)!.Invoke(w,new object[]{"Transferencias"})!).GetAwaiter().GetResult();
+  var contenido=(DockPanel)((ContentControl)w.FindName("Contenido")).Content;
+  var acciones=contenido.Children.OfType<WrapPanel>().Single();
+  Verificar(acciones.Children.OfType<Button>().Any(b=>(string)b.Content=="Todo el historial")&&acciones.Children.OfType<DatePicker>().First().SelectedDate==DateTime.Today.AddDays(-30),"módulo Transferencias visible con rango de 30 días y acceso a todo el historial");
+  var transferencias=new DataTable();transferencias.Columns.Add("Estado");transferencias.Columns.Add("Monto",typeof(decimal));
+  transferencias.Rows.Add("APROBADA",10m);transferencias.Rows.Add("RECHAZADA",100m);transferencias.Rows.Add("INCIERTA",25m);
+  ((DataGrid)tipo.GetField("tabla",flags)!.GetValue(w)!).ItemsSource=transferencias.DefaultView;
+  tipo.GetMethod("Filtrar",flags)!.Invoke(w,null);
+  Verificar(((TextBlock)w.FindName("EstadoPie")).Text.Contains("Total aprobado Q "+10m.ToString("N2"))&&((TextBlock)w.FindName("EstadoPie")).Text.Contains("1 pendientes"),"totales de transferencias separan aprobadas, rechazos y pendientes");
+
   tipo.GetField("cerrando",flags)!.SetValue(w,true);w.Close();app.Shutdown();Console.WriteLine($"RESULTADO: {aprobadas} comprobaciones de interfaz correctas.");
  }
  private static void EntradaTarjeta()

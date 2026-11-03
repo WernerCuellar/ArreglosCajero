@@ -73,6 +73,14 @@ internal static partial class Program
    Verificar(await Saldo(a,1)==origen-25.50m&&await Saldo(a,2)==otro+25.50m,"débito y crédito internos atómicos; usuarioId enviado por el cliente se ignora");
    Verificar((await c1.Enviar("TRANSFERIR",datos,id)).Codigo=="00"&&await Saldo(a,2)==otro+25.50m,"repetir referencia no duplica transferencia interna");
    Verificar((await c1.Enviar("TRANSFERIR",Datos("BANC90","20000002",nombre2,26),id)).Codigo=="94","misma referencia con otro monto se rechaza");
+   var reporteInterno=await a.Consultar(ReportesMovimientos.Transferencias,("@d",DateTime.Today.AddDays(-1)),("@h",DateTime.Today.AddDays(1)));
+   string tokenInterno=interna.Datos.GetProperty("tokenTransferencia").GetString()!;
+   Verificar(reporteInterno.AsEnumerable().Count(r=>(string)r["TokenTransferencia"]==tokenInterno)==1,"servidor muestra un envío interno sin duplicar débito y crédito");
+   var historialOrigen=await a.Consultar(ReportesMovimientos.PorUsuario,("@u",1));
+   var historialDestino=await a.Consultar(ReportesMovimientos.PorUsuario,("@u",2));
+   Verificar(historialOrigen.AsEnumerable().Any(r=>r["TokenTransferencia"] as string==tokenInterno&&(string)r["Tipo"]=="TRANSFERENCIA_ENVIADA")&&historialDestino.AsEnumerable().Any(r=>r["TokenTransferencia"] as string==tokenInterno&&(string)r["Tipo"]=="TRANSFERENCIA_RECIBIDA"),"historial administrativo por cuenta incluye envío y recepción internos");
+   Verificar((await a.Consultar(ReportesMovimientos.Transferencias,("@d",DateTime.Today.AddDays(1)),("@h",DateTime.Today.AddDays(2)))).Rows.Count==0,"reporte administrativo respeta fechas sin ocultar otros períodos");
+
    var historia=(await c2.Enviar("HISTORIAL_TRANSFERENCIAS")).Datos;
    Verificar(historia.EnumerateArray().Any(t=>t.GetProperty("direccion").GetString()=="ENTRANTE"&&t.GetProperty("tokenTransferencia").GetString()==interna.Datos.GetProperty("tokenTransferencia").GetString()),"destinatario interno ve el abono recibido");
    Verificar((await VerificarCuenta(c1,"BANC90","4000000000000001")).Codigo=="30","no permite transferirse a la misma cuenta");
@@ -88,6 +96,11 @@ internal static partial class Program
    string tr=externa.Datos.GetProperty("tokenTransferencia").GetString()!;
    Verificar(Convert.ToInt32((await a.Consultar("SELECT COUNT(*) FROM dbo.TransferenciaBancaria WHERE TokenTransferencia=@t",("@t",tr))).Rows[0][0])==1&&
     Convert.ToInt32((await b.Consultar("SELECT COUNT(*) FROM dbo.TransferenciaBancaria WHERE TokenTransferencia=@t",("@t",tr))).Rows[0][0])==1,"mismo token persistido por ambos bancos");
+   var salidas=await a.Consultar(ReportesMovimientos.Transferencias,("@d",DateTime.Today.AddDays(-1)),("@h",DateTime.Today.AddDays(1)));
+   var entradas=await b.Consultar(ReportesMovimientos.Transferencias,("@d",DateTime.Today.AddDays(-1)),("@h",DateTime.Today.AddDays(1)));
+   Verificar(salidas.AsEnumerable().Count(r=>(string)r["TokenTransferencia"]==tr)==1&&entradas.AsEnumerable().Count(r=>(string)r["TokenTransferencia"]==tr)==1,"módulo del servidor muestra transferencias interbancarias salientes y entrantes");
+   Verificar((await b.Consultar(ReportesMovimientos.PorUsuario,("@u",8))).AsEnumerable().Any(r=>r["TokenTransferencia"] as string==tr&&(string)r["Tipo"]=="TRANSFERENCIA_RECIBIDA"),"historial administrativo del receptor incluye abono interbancario");
+
    await Login(receptor,8,"B");
    Verificar((await receptor.Enviar("CONSULTA_SALDO")).Datos.GetProperty("saldo").GetDecimal()==previo8+15,"cajero destino muestra saldo acreditado");
    Verificar((await receptor.Enviar("HISTORIAL_TRANSFERENCIAS")).Datos.EnumerateArray().Any(t=>t.GetProperty("tokenTransferencia").GetString()==tr),"cajero destino consulta transferencia recibida");

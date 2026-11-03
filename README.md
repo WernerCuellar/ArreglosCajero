@@ -41,3 +41,7 @@ Descargar el EXE único o el kit de conexión (descarga el EXE al iniciar) en [R
 En un clon: abrir Iniciar-Cajero.cmd; Sincronizar-Cajero.cmd vuelve a descargar la versión publicada y comprueba SHA256.
 Buscar servidor permite escanear o configurar IP, puerto y código de cajero.
 Ver [transferencias, arranque y estabilidad 2.2](Documentacion/09_Entrega/NETGEAR_2.2.0.md). Aplicar migraciones 08–11 en bases existentes.
+
+## Servidor 2.2.1: historial de transferencias
+Transferencias está después de Usuarios y tiene acceso desde Resumen. Transacciones y el historial por cuenta incluyen envíos y abonos. Todo el historial amplía las fechas. No requiere actualizar el cajero 2.2.0 ni otra migración SQL.
+[Detalle y pruebas](Documentacion/09_Entrega/NETGEAR_2.2.1_Historial.md) · [Descargar servidor 2.2.1](https://github.com/WernerCuellar/ArreglosCajero/releases/tag/netgear-2.2.1).
