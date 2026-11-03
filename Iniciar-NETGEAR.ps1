@@ -20,7 +20,9 @@ try {
   [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12
   $base="$repositorio/releases/download/netgear-$version";$temporal=$exe+'.download'
   Invoke-WebRequest -UseBasicParsing -Uri "$base/$nombre" -OutFile $temporal
-  $sumas=(Invoke-WebRequest -UseBasicParsing -Uri "$base/SHA256SUMS.txt").Content
+  $archivoSumas=$temporal+".sha256"
+  Invoke-WebRequest -UseBasicParsing -Uri "$base/SHA256SUMS.txt" -OutFile $archivoSumas
+  $sumas=Get-Content -LiteralPath $archivoSumas -Raw -Encoding UTF8
   $linea=($sumas -split '\r?\n' | Where-Object {$_ -match ("^[A-Fa-f0-9]{64}\s+"+[regex]::Escape($nombre)+"\s*$")} | Select-Object -First 1)
   if(!$linea){throw 'No se encontró SHA256 del ejecutable.'}
   if((Get-FileHash -LiteralPath $temporal -Algorithm SHA256).Hash -ne ($linea.Trim() -split '\s+')[0]){throw 'La descarga no coincide con SHA256.'}
