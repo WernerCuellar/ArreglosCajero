@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -55,11 +55,13 @@ internal static partial class Program
       if(m.Tipo=="LOGIN")datos=new {requiereToken=true};
       if(m.Tipo=="VALIDAR_TOKEN")datos=new {sesion="sesion-1",usuarioId=1,nombre="Usuario de prueba",debeCambiarPin=false};
       if(m.Tipo=="LOGOUT")continue; // No responde: el cierre local debe ser inmediato.
-      if(m.Tipo is "RETIRO" or "DEPOSITO")
+      if(m.Tipo=="BANCOS_TRANSFERENCIA")datos=new[]{new {codigoBanco="BANC90",nombreBanco="NETGEAR",esPropio=true}};
+      if(m.Tipo=="VERIFICAR_DESTINO")datos=new {nombreTitular="Destinatario de prueba"};
+      if(m.Tipo is "RETIRO" or "DEPOSITO" or "TRANSFERIR")
       {
        Interlocked.Increment(ref Movimientos);
        if(OmitirMovimiento)continue;
-       datos=new {saldo=99,fecha="2026-10-31T12:00:00",idTransaccion=1};
+       datos=new {saldo=99,fecha="2026-10-31T12:00:00",idTransaccion=1,tokenTransferencia="TRF-UI",bancoDestino="BANC90",nombreDestino="Destinatario de prueba",cuentaDestino="**** 0002"};
       }
       if(m.Tipo=="ESTADO_SOLICITUD")
       {
@@ -220,6 +222,42 @@ internal static partial class Program
     Verificar(cliente.Sesion==null&&tiempo.ElapsedMilliseconds<1000,"cerrar sesión no espera respuesta de LOGOUT");
     par.SaldoBloqueado.TrySetResult();await consulta;par.SaldoBloqueado=null;
     Verificar(pantalla.Content is not Border b||b.Child is not StackPanel sp||!sp.Children.OfType<TextBlock>().Any(t=>t.Text=="Operación completada"),"respuesta tardía no restaura pantalla de la sesión anterior");
+
+    Activar();par.OmitirMovimiento=false;int transferenciasAntes=par.Movimientos;
+    int paso=0;Exception? errorTransferencia=null;
+    var automatizar=new System.Windows.Threading.DispatcherTimer(){Interval=TimeSpan.FromMilliseconds(40)};
+    automatizar.Tick+=(_,_)=>{
+     try{
+      var form=app.Windows.OfType<Window>().FirstOrDefault(v=>v!=w&&v.Owner==w&&v.IsVisible);
+      if(form==null)return;
+      if(paso==0&&form.Title.Contains("destinatario")){
+       var panel=(StackPanel)form.Content;
+       panel.Children.OfType<TextBox>().Single().Text="20000002";
+       paso=1;panel.Children.OfType<Button>().First().RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+      }else if(paso==1&&form.Title.StartsWith("Transferir a")){
+       var panel=(StackPanel)((ScrollViewer)form.Content).Content;
+       var entradas=panel.Children.OfType<TextBox>().ToArray();entradas[0].Text="12.50";entradas[1].Text="Prueba de pantalla";
+       paso=2;panel.Children.OfType<WrapPanel>().Single().Children.OfType<Button>().First().RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+      }else if(paso==2&&form.Title=="Confirmar transferencia"){
+       var panel=(StackPanel)((ScrollViewer)form.Content).Content;
+       Verificar(string.Join(" ",panel.Children.OfType<TextBlock>().Select(t=>t.Text)).Contains("Destinatario de prueba"),"confirmación muestra nombre del destinatario");
+       paso=3;panel.Children.OfType<Button>().First().RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+      }
+     }catch(Exception e){errorTransferencia=e;automatizar.Stop();foreach(var f in app.Windows.OfType<Window>().Where(v=>v.Owner==w).ToArray())f.Close();}
+    };
+    automatizar.Start();await (Task)Invocar("TransferirDinero")!;automatizar.Stop();if(errorTransferencia!=null)throw errorTransferencia;
+    Verificar(paso==3&&par.Movimientos==transferenciasAntes+1&&Recibo().Contains("TRF-UI"),"formulario verifica, confirma y muestra comprobante de una sola transferencia");
+    Invocar("CerrarSesion","Prueba de configuración");
+    _=w.Dispatcher.BeginInvoke(new Action(()=>{
+     var form=app.Windows.OfType<Window>().Single(v=>v.Title=="Buscar y configurar servidor NETGEAR");
+     var panel=(DockPanel)form.Content;
+     var abajo=panel.Children.OfType<StackPanel>().Last();abajo.Children.OfType<TextBox>().Single().Text="127.0.0.1";
+     var fila=abajo.Children.OfType<WrapPanel>().Single();var campos=fila.Children.OfType<TextBox>().ToArray();
+     campos[0].Text=par.Puerto.ToString();campos[1].Text="ATM-CONFIG";
+     abajo.Children.OfType<Button>().Single().RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+    }));
+    Invocar("BuscarServidor");
+    Verificar(File.ReadAllText(configuracion).Contains("ATM-CONFIG")&&cliente.Cajero=="ATM-CONFIG","ventana Buscar servidor guarda IP, puerto y código para conectar");
 
     // Una configuración inválida no debe iniciar ni matar la aplicación.
     string corrupta=Path.Combine(carpeta,"invalida.json");File.WriteAllText(corrupta,"{mal json");

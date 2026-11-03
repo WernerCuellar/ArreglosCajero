@@ -11,3 +11,5 @@ BaseDeDatos/Respaldos/*.bak
 Verificacion/MANIFIESTO_SHA256.csv
 **/Logs/
 Pruebas/Evidencias/reporte_prueba.xlsx
+
+Aplicaciones/

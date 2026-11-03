@@ -1,4 +1,4 @@
-﻿# Manual del cajero
+# Manual del cajero
 
 ## Conectar
 
@@ -41,3 +41,8 @@ El cierre local es inmediato aunque el servidor no responda. Los formularios cue
 El comprobante confirmado permite Guardar comprobante en PDF. No incluye PIN/token y usa la fecha del servidor. Un fallo de guardado no revierte la operación.
 Los retiros y depósitos quedan bloqueados hasta resolver un pendiente con su usuario; consultas y cierre siguen disponibles.
 Ver Documentacion/09_Entrega/CorreccionesCajero_2026-10-31.md para detalle de los doce puntos y compatibilidad del servidor.
+
+## Ampliación 2.2.0
+Consultar ../09_Entrega/NETGEAR_2.2.0.md para arranque, búsqueda de servidor y transferencias desde el cajero.
+Mensajes nuevos: NETGEAR_INFO (descubrimiento TCP sin sesión), BANCOS_TRANSFERENCIA, VERIFICAR_DESTINO, TRANSFERIR, ESTADO_TRANSFERENCIA e HISTORIAL_TRANSFERENCIAS. Todos salvo NETGEAR_INFO requieren sesión autenticada.
+TRANSFERIR requiere bancoDestino, cuentaDestino, nombreDestino, monto y concepto; la identidad origen procede de la sesión. IdSolicitud se conserva para deduplicación. ESTADO_TRANSFERENCIA usa idOriginal y devuelve el resultado correlacionado del mismo usuario/cajero.

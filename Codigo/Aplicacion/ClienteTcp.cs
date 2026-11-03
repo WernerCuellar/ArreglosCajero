@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Net.Sockets;
 using System.Text;
 using CajeroRed.Protocolo;
@@ -22,11 +23,12 @@ public sealed partial class ClienteTcp : IAsyncDisposable
     private TcpClient? socket;
     private StreamWriter? writer;
     private Task? ciclo;
+    private long ultimaRespuesta=Stopwatch.GetTimestamp();
     public void Iniciar()
     {
         if(string.IsNullOrWhiteSpace(Direccion)||Puerto is <1 or >65535||string.IsNullOrWhiteSpace(Cajero))
         {Estado?.Invoke("Configuración de conexión inválida. Corríjala para conectar.");return;}
-        ciclo??=Task.Run(Reconectar);
+        if(ciclo==null||ciclo.IsCompleted)ciclo=Task.Run(Reconectar);
     }
     public void ReconectarAhora()=>socket?.Dispose();
     public async Task<Mensaje> Enviar(string tipo,object? datos=null,string? id=null)
@@ -35,7 +37,7 @@ public sealed partial class ClienteTcp : IAsyncDisposable
         if(id!=null)m=m with {IdSolicitud=id};
         return await EnviarConProteccion(m);
     }
-    private async Task<Mensaje> Solicitar(Mensaje m,CancellationToken ct)
+    private async Task<Mensaje> Solicitar(Mensaje m,CancellationToken ct,int segundos=10)
     {
         var actual=writer ?? throw new IOException("Servidor desconectado.");
         var promesa=new TaskCompletionSource<Mensaje>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -44,7 +46,7 @@ public sealed partial class ClienteTcp : IAsyncDisposable
         {
             await escritura.WaitAsync(ct);
             try {await actual.WriteLineAsync(m.Serializar().AsMemory(),ct);}finally{escritura.Release();}
-            var r=await promesa.Task.WaitAsync(TimeSpan.FromSeconds(10),ct);
+            var r=await promesa.Task.WaitAsync(TimeSpan.FromSeconds(segundos),ct);
             return r;
         }
         finally{pendientes.TryRemove(m.IdSolicitud,out _);}
@@ -58,14 +60,14 @@ public sealed partial class ClienteTcp : IAsyncDisposable
             try
             {
                 Estado?.Invoke("Conectando…");
-                socket=new TcpClient(){NoDelay=true};
+                socket=new TcpClient();SocketRed.Configurar(socket);
                 await socket.ConnectAsync(Direccion,Puerto,fin.Token).AsTask().WaitAsync(TimeSpan.FromSeconds(5),fin.Token);
                 writer=new StreamWriter(socket.GetStream(),new UTF8Encoding(false),4096,true){AutoFlush=true,NewLine="\n"};
                 lectura=Leer(socket,conectado.Token);
                 fase="REGISTRAR";
-                var registro=await Solicitar(Mensaje.Solicitud("REGISTRAR_CAJERO",Cajero,new {equipo=Environment.MachineName,version="2.1.0"}),conectado.Token);
+                var registro=await Solicitar(Mensaje.Solicitud("REGISTRAR_CAJERO",Cajero,new {equipo=Environment.MachineName,version="2.2.0"}),conectado.Token);
                 if(registro.Codigo!="00")throw new IOException(registro.MensajeTexto);
-                Conectado=true;Estado?.Invoke("Conectado · "+Cajero);
+                ultimaRespuesta=Stopwatch.GetTimestamp();Conectado=true;Estado?.Invoke("Conectado · "+Cajero);
                 Comando?.Invoke(registro);
                 latido=Latidos(conectado.Token);
                 var terminada=await Task.WhenAny(lectura,latido);fase=ReferenceEquals(terminada,lectura)?"LECTURA":"HEARTBEAT";
@@ -93,7 +95,7 @@ public sealed partial class ClienteTcp : IAsyncDisposable
             for(int i=0;i<n;i++)
             {
                 if(buffer[i]!=10){if(bytes.Count>65536)throw new IOException("Respuesta demasiado grande.");bytes.Add(buffer[i]);continue;}
-                var m=Mensaje.Leer(new UTF8Encoding(false,true).GetString(bytes.ToArray()).TrimEnd('\r'));bytes.Clear();
+                var m=Mensaje.Leer(new UTF8Encoding(false,true).GetString(bytes.ToArray()).TrimEnd('\r'));bytes.Clear();ultimaRespuesta=Stopwatch.GetTimestamp();
                 if(m.Tipo=="COMANDO")Comando?.Invoke(m);
                 else if(pendientes.TryGetValue(m.IdSolicitud,out var p))p.TrySetResult(m);
             }
@@ -103,7 +105,19 @@ public sealed partial class ClienteTcp : IAsyncDisposable
     {
         using var reloj=new PeriodicTimer(TimeSpan.FromSeconds(10));
         while(await reloj.WaitForNextTickAsync(ct))
-        {var r=await Solicitar(Mensaje.Solicitud("HEARTBEAT",Cajero),ct);if(r.Codigo!="00")DiagnosticoRed.Registrar("CAJERO",Cajero,"HEARTBEAT_RECHAZADO",new {codigo=r.Codigo});Comando?.Invoke(r);}
+        {
+         try
+         {
+          var r=await Solicitar(Mensaje.Solicitud("HEARTBEAT",Cajero),ct,3);
+          if(r.Codigo!="00")DiagnosticoRed.Registrar("CAJERO",Cajero,"HEARTBEAT_RECHAZADO",new {codigo=r.Codigo});
+          Comando?.Invoke(r);
+         }
+         catch(TimeoutException)
+         {
+          DiagnosticoRed.Registrar("CAJERO",Cajero,"HEARTBEAT_SIN_RESPUESTA",new {segundos=(int)Stopwatch.GetElapsedTime(ultimaRespuesta).TotalSeconds});
+          if(Stopwatch.GetElapsedTime(ultimaRespuesta)>TimeSpan.FromSeconds(30))throw;
+         }
+        }
     }
     public async ValueTask DisposeAsync()
     {fin.Cancel();socket?.Dispose();if(ciclo!=null)try{await ciclo;}catch(Exception){}fin.Dispose();}

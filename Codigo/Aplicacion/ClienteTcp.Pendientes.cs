@@ -11,6 +11,7 @@ public sealed partial class ClienteTcp
  private readonly SemaphoreSlim movimiento=new(1,1);
  private string? carpetaPendientes;
  private PendienteOperacion? pendienteActual;
+ public string? TipoPendiente=>pendienteActual?.Tipo;
  public int? UsuarioActual {get;private set;}
  public string? ErrorRecuperacion {get;private set;}
  public bool MovimientoEnCurso=>movimiento.CurrentCount==0;
@@ -41,7 +42,7 @@ public sealed partial class ClienteTcp
     if(new FileInfo(archivo).Length>4096)throw new JsonException("Registro demasiado grande.");
     var p=JsonSerializer.Deserialize<PendienteOperacion>(File.ReadAllText(archivo),Mensaje.Json)??throw new JsonException();
     if(p.UsuarioId!=UsuarioActual||!p.Direccion.Equals(Direccion,StringComparison.OrdinalIgnoreCase)||p.Puerto!=Puerto||
-      p.Cajero!=Cajero||string.IsNullOrWhiteSpace(p.Referencia)||p.Referencia.Length>64||p.Tipo is not ("RETIRO" or "DEPOSITO"))throw new JsonException();
+      p.Cajero!=Cajero||string.IsNullOrWhiteSpace(p.Referencia)||p.Referencia.Length>64||p.Tipo is not ("RETIRO" or "DEPOSITO" or "TRANSFERIR"))throw new JsonException();
     pendienteActual=p;SolicitudIncierta=p.Referencia;
    }
   }
@@ -74,11 +75,11 @@ public sealed partial class ClienteTcp
  }
  private async Task<Mensaje> EnviarConProteccion(Mensaje m)
  {
-  if(m.Tipo is not ("RETIRO" or "DEPOSITO"))return await Solicitar(m,fin.Token);
+  if(m.Tipo is not ("RETIRO" or "DEPOSITO" or "TRANSFERIR"))return await Solicitar(m,fin.Token);
   if(!movimiento.Wait(0))throw new InvalidOperationException("Ya hay un movimiento en curso.");
   try
   {
-   if(SolicitudIncierta!=null||ErrorRecuperacion!=null)throw new InvalidOperationException("Consulte y aclare la operación pendiente antes de retirar o depositar.");
+   if(SolicitudIncierta!=null||ErrorRecuperacion!=null)throw new InvalidOperationException("Consulte y aclare la operación pendiente antes de retirar, depositar o transferir.");
    if(Sesion==null)throw new InvalidOperationException("Inicie sesión antes de realizar un movimiento.");
    // Persistir ANTES de enviar cubre también un cierre inesperado tras COMMIT.
    var p=new PendienteOperacion(m.IdSolicitud,Direccion,Puerto,Cajero,UsuarioActual,m.Tipo,

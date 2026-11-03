@@ -1,7 +1,8 @@
 ﻿#requires -RunAsAdministrator
-param([ValidateRange(1,65535)][int]$Puerto=5000,[string[]]$RedPermitida=@('LocalSubnet'))
+param([ValidateRange(1,65535)][int]$Puerto=5000,[string[]]$RedPermitida=@('LocalSubnet'),[string]$Programa='')
 $ErrorActionPreference='Stop'
-$programa=Join-Path $PSScriptRoot 'Distribucion\Servidor\Servidor.exe'
+if(!$Programa){$Programa=Join-Path $PSScriptRoot 'Distribucion\Servidor\Servidor.exe'}
+$programa=[IO.Path]::GetFullPath($Programa)
 if(!(Test-Path -LiteralPath $programa)){throw 'Publique primero el servidor con Publicar.ps1.'}
 foreach($regla in @(@{Nombre="NETGEAR-Servidor-TCP-$Puerto";Protocolo='TCP';Puerto=$Puerto},@{Nombre='NETGEAR-Discovery-UDP-5005';Protocolo='UDP';Puerto=5005})){
  $existente=Get-NetFirewallRule -Name $regla.Nombre -ErrorAction SilentlyContinue

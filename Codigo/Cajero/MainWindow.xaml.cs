@@ -32,8 +32,10 @@ public partial class MainWindow : Window
  {
   InitializeComponent();inicioAutomatico=conectar;
   string datos=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"NETGEAR","Cajero");
-  ruta=configuracion??Path.Combine(AppContext.BaseDirectory,"cajero.local.json");
-  string respaldo=configuracion??Path.Combine(datos,"config-"+Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(AppContext.BaseDirectory)))[..16]+".json");
+  string baseConfig=Path.GetDirectoryName(Environment.ProcessPath)??AppContext.BaseDirectory;
+  if(string.Equals(Path.GetFileNameWithoutExtension(Environment.ProcessPath),"dotnet",StringComparison.OrdinalIgnoreCase))baseConfig=AppContext.BaseDirectory;
+  ruta=configuracion??Path.Combine(baseConfig,"cajero.local.json");
+  string respaldo=configuracion??Path.Combine(datos,"config-"+Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(baseConfig)))[..16]+".json");
   string aviso="";
   try
   {
@@ -64,6 +66,7 @@ public partial class MainWindow : Window
   });
   cliente.Comando+=m=>Dispatcher.BeginInvoke(()=>{if(!cerrando)AtenderComando(m);});
   cliente.PendienteCambiado+=()=>Dispatcher.BeginInvoke(()=>{if(!cerrando)ActualizarBloqueo();});
+  Pie.Children.Add(Ui.Boton("Buscar servidor",BuscarServidor));
   Pie.Children.Add(Ui.Boton("Configuración de conexión",Configurar));
   Pie.Children.Add(Ui.BotonAsync("Probar conexión",()=>Acceso(ProbarConexion)));
   Pie.Children.Add(Ui.BotonAsync("Consultar operación pendiente",()=>Operacion(ConsultarPendiente)));
@@ -74,6 +77,7 @@ public partial class MainWindow : Window
    foreach(var w in formularios.ToArray())w.Close();
    await cliente.DisposeAsync();_=Dispatcher.BeginInvoke(new Action(Close));
   };
+  if(conectar&&!File.Exists(ruta)&&!File.Exists(respaldo)&&!Environment.GetCommandLineArgs().Contains("--servidor"))Loaded+=(_,_)=>BuscarServidor();
   MostrarInicio();if(aviso!="")Aviso.Text=aviso;
   reloj.Start();if(conectar&&configValida)cliente.Iniciar();
  }
@@ -218,7 +222,7 @@ public partial class MainWindow : Window
  {
   foreach(var boton in botonesMovimientos)boton.IsEnabled=!debeCambiarPin&&!cliente.MovimientosBloqueados;
   if(cliente.ErrorRecuperacion!=null)Aviso.Text=cliente.ErrorRecuperacion;
-  else if(cliente.SolicitudIncierta!=null)Aviso.Text="Movimiento pendiente. Consulte su referencia antes de retirar o depositar.";
+  else if(cliente.SolicitudIncierta!=null)Aviso.Text="Movimiento pendiente. Consulte su referencia antes de retirar, depositar o transferir.";
  }
  private void MostrarMenu()
  {
@@ -230,6 +234,8 @@ public partial class MainWindow : Window
   if(debeCambiarPin)p.Children.Add(Ui.Texto("Debe cambiar el PIN temporal antes de operar."));
   Opcion("Retirar efectivo",()=>Movimiento("RETIRO"),!debeCambiarPin,true);
   Opcion("Depositar efectivo",()=>Movimiento("DEPOSITO"),!debeCambiarPin,true);
+  Opcion("Transferir dinero",TransferirDinero,!debeCambiarPin,true);
+  Opcion("Mis transferencias",HistorialTransferencias,!debeCambiarPin);
   Opcion("Consultar saldo",Saldo,!debeCambiarPin);Opcion("Últimas 5 transacciones",Historial,!debeCambiarPin);Opcion("Cambiar PIN",CambiarPin);
   var salir=Ui.Boton("Cerrar sesión",()=>CerrarSesion());salir.Width=260;salir.Height=70;opciones.Children.Add(salir);
   p.Children.Add(opciones);Pantalla.Content=p;ActualizarBloqueo();

@@ -1,4 +1,4 @@
-﻿# Protocolo interno v1
+# Protocolo interno v1
 
 Transporte TCP persistente. Un objeto JSON por línea, UTF-8 sin BOM y terminador LF. Puerto por defecto 5000. Solicitud máxima 32768 bytes; respuesta máxima 65536 bytes. El receptor conserva fragmentos de mensajes entre lecturas y admite varias líneas en un mismo paquete TCP. Tamaños excesivos o JSON inválido cierran la conexión. Cada socket tiene un solo escritor serializado para evitar mezclar respuestas y comandos.
 
@@ -71,3 +71,8 @@ Descubrimiento UDP 5005 y contrato IB: Documentacion/08_IntegracionEntreGrupos/P
 ## Compatibilidad Cajero 2.1.0
 VALIDAR_TOKEN aprobado añade usuarioId. ESTADO_SOLICITUD conserva su validación por sesión/usuario/cajero y añade idOriginal/usuarioId a los datos confirmados. CONSULTA_SALDO y CAMBIO_PIN aprobado incluyen fecha de SQL para el comprobante.
 Son campos adicionales: los clientes anteriores pueden seguir interpretando la respuesta. El cliente 2.1 requiere el servidor actualizado para recuperar pendientes con identidad verificada.
+
+## Ampliación 2.2.0
+Consultar ../09_Entrega/NETGEAR_2.2.0.md para arranque, búsqueda de servidor y transferencias desde el cajero.
+Mensajes nuevos: NETGEAR_INFO (descubrimiento TCP sin sesión), BANCOS_TRANSFERENCIA, VERIFICAR_DESTINO, TRANSFERIR, ESTADO_TRANSFERENCIA e HISTORIAL_TRANSFERENCIAS. Todos salvo NETGEAR_INFO requieren sesión autenticada.
+TRANSFERIR requiere bancoDestino, cuentaDestino, nombreDestino, monto y concepto; la identidad origen procede de la sesión. IdSolicitud se conserva para deduplicación. ESTADO_TRANSFERENCIA usa idOriginal y devuelve el resultado correlacionado del mismo usuario/cajero.

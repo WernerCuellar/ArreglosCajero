@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -22,7 +22,8 @@ public partial class MainWindow : Window
  private string pagina="Resumen",cajeroGrafica="ATM-01";private DataGrid? tabla;private TextBox? filtro;private StackPanel? metricas;private WrapPanel? graficas;
  private DatePicker? desde,hasta;private bool refrescando,cerrando;private int puerto=5000;
  private string cadena="Server=.\\SQLEXPRESS;Database=BD_CajeroRed_Fase2;Integrated Security=True;Encrypt=True;TrustServerCertificate=True";
-  private readonly string local=Path.Combine(AppContext.BaseDirectory,"servidor.local.json");
+  private static string CarpetaConfiguracion=>string.Equals(Path.GetFileNameWithoutExtension(Environment.ProcessPath),"dotnet",StringComparison.OrdinalIgnoreCase)?AppContext.BaseDirectory:Path.GetDirectoryName(Environment.ProcessPath)??AppContext.BaseDirectory;
+ private readonly string local=Path.Combine(CarpetaConfiguracion,"servidor.local.json");
  private readonly List<Window> tokens=[];
  public MainWindow()
  {
@@ -30,7 +31,7 @@ public partial class MainWindow : Window
    try
    {
     var args=Environment.GetCommandLineArgs();for(int i=1;i<args.Length-1;i++)if(args[i]=="--config")local=Path.GetFullPath(args[i+1]);
-    var ruta=File.Exists(local)?local:Path.Combine(AppContext.BaseDirectory,"servidor.json");if(File.Exists(ruta))cadena=JsonDocument.Parse(File.ReadAllText(ruta)).RootElement.GetProperty("cadenaSql").GetString()!;
+    var ruta=File.Exists(local)?local:Path.Combine(CarpetaConfiguracion,"servidor.json");if(File.Exists(ruta))cadena=JsonDocument.Parse(File.ReadAllText(ruta)).RootElement.GetProperty("cadenaSql").GetString()!;
    }catch(Exception e){Ui.Error(e);}
   InicializarServicios();MostrarLogin();ActualizarDirecciones();
   timer.Tick+=async(_,_)=>await Refrescar();

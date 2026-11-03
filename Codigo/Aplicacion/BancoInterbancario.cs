@@ -182,11 +182,11 @@ public sealed class BancoInterbancario(BaseDatos bd) : IAsyncDisposable
   // No encontrarla o no soportar la extensión no demuestra rechazo.
   return r;
  }
- public async Task IniciarDiscovery(int puerto)
+ public async Task IniciarDiscovery(int puerto,int puertoUdp=5005)
  {
   if(udp!=null)return;
   await Propio();
-  var nuevo=new UdpClient(new IPEndPoint(IPAddress.Any,5005));udp=nuevo;fin=new();
+  var nuevo=new UdpClient(new IPEndPoint(IPAddress.Any,puertoUdp));udp=nuevo;fin=new();
   var ct=fin.Token;
   receptor=Task.Run(async()=>
   {

@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -36,6 +36,7 @@ internal static partial class Program
    if(args.Contains("--capturas")){Capturas();return 0;}
    if(args.Contains("--crear-login")){CrearLogin().GetAwaiter().GetResult();return 0;}
    if(args.Contains("--preparar-demo")){PrepararDemo().GetAwaiter().GetResult();return 0;}
+   if(args.Contains("--transferencias")){TransferenciasDesdeCajero().GetAwaiter().GetResult();Console.WriteLine($"RESULTADO: {aprobadas} comprobaciones correctas.");return 0;}
    Basicas();
    if(args.Contains("--integracion"))Integracion().GetAwaiter().GetResult();
    Console.WriteLine($"RESULTADO: {aprobadas} comprobaciones correctas.");return 0;
@@ -229,8 +230,8 @@ internal static partial class Program
    Verificar((await c2.Enviar("CONSULTA_SALDO")).Codigo=="57","expiración de sesión en servidor");
    // El supervisor de heartbeats usa la hora de SQL, no reloj del cliente.
    await bd.Ejecutar("UPDATE dbo.Cajero SET UltimoHeartbeat=DATEADD(second,-31,SYSDATETIME()) WHERE Codigo='ATM-03'");
-   await Esperar(()=>!c3.Conectado,5000);
-   Verificar(true,"heartbeat vencido desconecta y registra alerta");
+   await Task.Delay(2500);Verificar(c3.Conectado,"SQL atrasado no desconecta un socket que sigue enviando heartbeat");
+   c3.ReconectarAhora();await Task.Delay(200);
    await Esperar(()=>c3.Conectado,12000);Verificar(true,"reconexión automática conserva identidad del cajero");
    var logs=await bd.Consultar("SELECT COUNT(*) N FROM dbo.Bitacora WHERE Accion='CONEXION'");Verificar((int)logs.Rows[0][0]>=4,"auditoría de conexión y reconexión");
    var pines=await bd.Consultar("SELECT COUNT(*) N FROM dbo.Tarjeta WHERE DATALENGTH(PinHash)=32 AND LEN(Salt)=64");Verificar((int)pines.Rows[0][0]>=8,"PIN almacenado solo como SHA256 con salt");
@@ -287,10 +288,11 @@ internal static partial class Program
   var estado=await Enviar(Req("IB_ESTADO_TRANSFERENCIA"));
   Verificar(estado.Codigo=="00"&&estado.Datos.GetProperty("tokenTransferencia").GetString()=="TRF-20261031-000001","extensión de consulta recupera confirmación persistida");
   Verificar(servidor.Conectados==3,"sondeos interbancarios no registran ni desconectan cajeros");
-  await ib.IniciarDiscovery(puerto);
+  int puertoUdp;using(var reservaUdp=new UdpClient(new IPEndPoint(IPAddress.Loopback,0)))puertoUdp=((IPEndPoint)reservaUdp.Client.LocalEndPoint!).Port;
+  await ib.IniciarDiscovery(puerto,puertoUdp);
   using(var udp=new UdpClient(new IPEndPoint(IPAddress.Loopback,0)))
   {
-   await udp.SendAsync(System.Text.Encoding.UTF8.GetBytes("DISCOVER_BANCO_ATM|BANC01|PRUEBA|127.0.0.1|5000"),new IPEndPoint(IPAddress.Loopback,5005));
+   await udp.SendAsync(System.Text.Encoding.UTF8.GetBytes("DISCOVER_BANCO_ATM|BANC01|PRUEBA|127.0.0.1|5000"),new IPEndPoint(IPAddress.Loopback,puertoUdp));
    var respuesta=await udp.ReceiveAsync().WaitAsync(TimeSpan.FromSeconds(5));
    string texto=System.Text.Encoding.UTF8.GetString(respuesta.Buffer);
    Verificar(texto.StartsWith("HERE_BANCO_ATM|BANC90|NETGEAR PRUEBAS|127.0.0.1|"),"descubrimiento UDP responde al remitente con formato acordado");

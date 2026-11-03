@@ -16,7 +16,7 @@ public partial class MainWindow
  private void ExigirMovimiento(int version,string? sesion)
  {
   ExigirSesion(version,sesion);
-  if(cliente.MovimientosBloqueados)throw new InvalidOperationException("Aclare la operación pendiente antes de retirar o depositar.");
+  if(cliente.MovimientosBloqueados)throw new InvalidOperationException("Aclare la operación pendiente antes de enviar dinero.");
  }
  private bool Confirmar(string titulo,string mensaje,int version,string? sesion)
  {
@@ -91,6 +91,10 @@ public partial class MainWindow
  {
   int version=generacion;string? sesion=cliente.Sesion;
   var lineas=new List<string>{"COMPROBANTE",texto};
+  if(r.Datos.TryGetProperty("tokenTransferencia",out var token))lineas.Add("Token de transferencia: "+token.GetString());
+  if(r.Datos.TryGetProperty("nombreDestino",out var destinatario))lineas.Add("Destinatario: "+destinatario.GetString());
+  if(r.Datos.TryGetProperty("bancoDestino",out var banco))lineas.Add("Banco destino: "+banco.GetString());
+  if(r.Datos.TryGetProperty("cuentaDestino",out var cuenta))lineas.Add("Cuenta destino: "+cuenta.GetString());
   if(r.Datos.TryGetProperty("idTransaccion",out var id))lineas.Add("Transacción: "+id);
   if(r.Datos.TryGetProperty("fecha",out var fecha))lineas.Add("Fecha del servidor: "+fecha.GetString());
   if(r.Datos.TryGetProperty("saldo",out var saldo))lineas.Add($"Saldo actual: Q {saldo.GetDecimal():N2}");
@@ -112,7 +116,7 @@ public partial class MainWindow
   string? referencia=cliente.SolicitudIncierta;
   if(referencia==null){Aviso.Text=cliente.ErrorRecuperacion??"No hay operaciones pendientes para este usuario y conexión.";return;}
   int version=generacion;string? sesion=cliente.Sesion;
-  var r=await cliente.Enviar("ESTADO_SOLICITUD",new {idOriginal=referencia});
+  var r=await cliente.Enviar(cliente.TipoPendiente=="TRANSFERIR"?"ESTADO_TRANSFERENCIA":"ESTADO_SOLICITUD",new {idOriginal=referencia});
   if(!SigueVigente(version,sesion)||!Exito(r))return;
   cliente.ConfirmarConsultaPendiente(r);MostrarMenu();
   string codigo=r.Datos.GetProperty("codigo").GetString()!;

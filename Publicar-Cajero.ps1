@@ -19,6 +19,7 @@ try {
  if($config.nombreBanco -eq 'Sistema bancario'){$config.nombreBanco='NETGEAR';$config | ConvertTo-Json | Set-Content -LiteralPath $rutaEjemplo -Encoding UTF8}
 }catch{Write-Warning 'Se conservó cajero.json: corríjalo desde Configuración de conexión si está dañado.'}
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Iniciar-Cajero.cmd') -Destination (Join-Path $destinoFinal 'Iniciar-Cajero.cmd') -Force
+foreach($auxiliar in @('Iniciar-NETGEAR.ps1','Sincronizar-Cajero.cmd')){Copy-Item -LiteralPath (Join-Path $PSScriptRoot $auxiliar) -Destination $destinoFinal -Force}
 $documentos=Join-Path $destinoFinal 'Documentacion\09_Entrega'
 New-Item -ItemType Directory -Path $documentos -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Documentacion\09_Entrega\CorreccionesCajero_2026-10-31.md') -Destination $documentos -Force

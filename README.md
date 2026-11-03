@@ -1,4 +1,4 @@
-﻿# NETGEAR — servidor CajeroRed
+# NETGEAR — servidor CajeroRed
 
 Servidor C# / WPF con SQL Server, dashboard, sockets para cajeros e integración entre bancos.
 
@@ -20,7 +20,7 @@ Wi-Fi y Ethernet necesitan reservas DHCP independientes e IP distintas. Ver [rev
 Implementa el [protocolo recibido](Documentacion/08_IntegracionEntreGrupos/PROTOCOLO_CONEXION_BANCOS_LLM.md).
 Soporta descubrimiento UDP, IB_PING, IB_VERIFICAR_CUENTA e IB_TRANSFERIR; añade deduplicación y consulta opcional IB_ESTADO_TRANSFERENCIA.
 Solo bancos externos autorizados por código e IP pueden acreditar transferencias. Es una restricción de la LAN de pruebas, no autenticación criptográfica.
-Los envíos desde el dashboard requieren administrador y autorización del usuario origen; no se añade una pantalla nueva a los cajeros.
+El cajero permite transferir a otras cuentas NETGEAR y a bancos externos autorizados desde Transferir dinero; Mis transferencias muestra envíos y abonos.
 Ver [contrato y límites](Documentacion/08_IntegracionEntreGrupos/ProtocoloExterno.md).
 
 ## Verificación
@@ -30,8 +30,14 @@ Los ensayos locales no sustituyen las pruebas físicas con otros grupos.
 
 El repositorio incluye también el fuente del cliente; excluye configuración privada, respaldo BAK operativo, ejecutables, cachés y registros locales. El paquete local conserva el respaldo original.
 
-## Cajero NETGEAR 2.1.0
+## Cajero NETGEAR 2.2.0
 Se implementan los cambios de cambios.txt: recuperación persistente, bloqueo de movimientos, cierre inmediato, validaciones, control de formularios y comprobantes PDF.
 Aplicar también 09_CompatibilidadCajero.sql (incluido en Actualizar-Interbancario.ps1).
 Publicar-Cajero.ps1 actualiza la carpeta hermana CajeroRed_Cajero y su CMD preservando configuración privada.
 Pruebas.dll --revision-cajero ejecuta los ensayos del cliente. Detalle en Documentacion/09_Entrega/CorreccionesCajero_2026-10-31.md.
+
+## Ejecutables y conexión rápida
+Descargar el EXE único o ZIP completo en [Releases](https://github.com/WernerCuellar/ArreglosCajero/releases/tag/netgear-2.2.0). Incluyen .NET para Windows x64.
+En un clon: abrir Iniciar-Cajero.cmd; Sincronizar-Cajero.cmd vuelve a descargar la versión publicada y comprueba SHA256.
+Buscar servidor permite escanear o configurar IP, puerto y código de cajero.
+Ver [transferencias, arranque y estabilidad 2.2](Documentacion/09_Entrega/NETGEAR_2.2.0.md). Aplicar migraciones 08–11 en bases existentes.
