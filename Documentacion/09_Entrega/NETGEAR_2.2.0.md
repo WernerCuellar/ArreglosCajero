@@ -3,7 +3,7 @@
 ## Abrir el cajero
 En Windows x64, descargar NETGEAR_Cajero_2.2.0.exe desde Releases y abrirlo.
 Incluye .NET; no requiere Visual Studio ni SQL Server en el cajero.
-También puede descargar el ZIP completo, extraerlo y abrir Iniciar-Cajero.cmd.
+También puede descargar NETGEAR_Conexion_2.2.0.zip, extraerlo y abrir Iniciar-Cajero.cmd (requiere Internet para descargar el EXE la primera vez).
 En un clon del repositorio, el CMD descarga y verifica el ejecutable publicado mediante SHA256.
 Sincronizar-Cajero.cmd descarga otra vez la versión indicada por el lanzador. Cerrar el cajero antes de actualizar.
 Para versiones futuras: git pull y luego Sincronizar-Cajero.cmd.

@@ -37,7 +37,7 @@ Publicar-Cajero.ps1 actualiza la carpeta hermana CajeroRed_Cajero y su CMD prese
 Pruebas.dll --revision-cajero ejecuta los ensayos del cliente. Detalle en Documentacion/09_Entrega/CorreccionesCajero_2026-10-31.md.
 
 ## Ejecutables y conexión rápida
-Descargar el EXE único o ZIP completo en [Releases](https://github.com/WernerCuellar/ArreglosCajero/releases/tag/netgear-2.2.0). Incluyen .NET para Windows x64.
+Descargar el EXE único o el kit de conexión (descarga el EXE al iniciar) en [Releases](https://github.com/WernerCuellar/ArreglosCajero/releases/tag/netgear-2.2.0). Incluyen .NET para Windows x64.
 En un clon: abrir Iniciar-Cajero.cmd; Sincronizar-Cajero.cmd vuelve a descargar la versión publicada y comprueba SHA256.
 Buscar servidor permite escanear o configurar IP, puerto y código de cajero.
 Ver [transferencias, arranque y estabilidad 2.2](Documentacion/09_Entrega/NETGEAR_2.2.0.md). Aplicar migraciones 08–11 en bases existentes.
